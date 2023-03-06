@@ -6,7 +6,7 @@ def encode(n):
         part = n % 128  #TODO bitmask for possible speed
         n >>= 7
         if(n > 0):
-            part += 0b10000000
+            part += 0x80 #using hexadecimal 
         out.append(part)
     return bytes(out)
 
