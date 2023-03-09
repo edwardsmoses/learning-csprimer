@@ -17,12 +17,11 @@ def main(win):
     win.nodelay(True)
     key=""
     while 1:          
-        try:                 
+        try:  
+           # one key stroke a time               
            key = win.getkey()         
            win.clear()                
            win.addstr(str(key)) 
-
-           
 
            if key == os.linesep:
               break           
