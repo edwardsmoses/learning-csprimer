@@ -26,45 +26,22 @@ console.log('pixel second read', buffer.slice(readOffset + 3, readOffset + 6));
 
 const blackPixels = [];
 
-for (let i = 0; i < 420; i++) {
 
-    for (let h = 0; h < 420; h++) {
+console.log('u', buffer.slice(readOffset).length);
+const pixelData = buffer.slice(readOffset);
+const blackPixelData = pixelData.map((pixel) => {
+    // console.log('what', pixel);
+    return 0x00;
+})
 
-        //black pixel
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-
-
-        //black pixel
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-
-        //black pixel
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
+// for (let i = 0; i < buffer.slice(readOffset).length; i++) {
+//     blackPixels.push(0x00);
+// }
 
 
-        //padding
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
+console.log('length black pixels', blackPixels.length, blackPixelData.length);
 
-        //black pixel
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-
-        //padding
-        blackPixels.push(0x00)
-        blackPixels.push(0x00)
-    }
-
-}
-console.log('length black pixels', blackPixels.length);
-
-fs.writeFile('blank_black.bmp', Buffer.from([...buffer.slice(0, 50), ...blackPixels]), () => {
+fs.writeFile('blank_black.bmp', Buffer.from([...buffer.slice(0, readOffset), ...blackPixelData]), () => {
     console.log('saved successfully');
     const blankBuffer = fs.readFileSync("blank_black.bmp")
     console.log('blankBuffer buffer', blankBuffer);
