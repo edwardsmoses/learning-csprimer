@@ -23,7 +23,16 @@ console.log('dataOffset', indexPos, offset, readOffset);
 console.log('pixel first read', buffer.slice(readOffset, readOffset + 3));
 console.log('pixel second read', buffer.slice(readOffset + 3, readOffset + 6));
 
-fs.writeFile('blank_black.bmp', buffer.slice(0, 50), () => {
+
+const blackPixels = [];
+
+for (let i = 0; i > 420; i++) {
+    blackPixels.push([...x00, x00, x00]);
+}
+
+console.log('length black pixels', blackPixels.length);
+
+fs.writeFile('blank_black.bmp', Buffer.from([...buffer.slice(0, 50), ...blackPixels]), () => {
     console.log('saved successfully');
     const blankBuffer = fs.readFileSync("blank_black.bmp")
     console.log('blankBuffer buffer', blankBuffer);
