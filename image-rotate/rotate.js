@@ -26,8 +26,8 @@ console.log('pixel second read', buffer.slice(readOffset + 3, readOffset + 6));
 
 const blackPixels = [];
 
-for (let i = 0; i > 420; i++) {
-    blackPixels.push([...x00, x00, x00]);
+for (let i = 0; i <= 420; i++) {
+    blackPixels.push(0x000000)    
 }
 
 console.log('length black pixels', blackPixels.length);
