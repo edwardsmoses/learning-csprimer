@@ -26,8 +26,38 @@ console.log('pixel second read', buffer.slice(readOffset + 3, readOffset + 6));
 
 const blackPixels = [];
 
-for (let i = 0; i <= 420; i++) {
-    blackPixels.push(0x000000)    
+for (let i = 0; i < 420; i++) {
+
+    //black pixel
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+
+
+    //black pixel
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+
+
+    //padding
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+
+    //black pixel
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+
+
+    //black pixel
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
+
+    //padding
+    blackPixels.push(0x00)
+    blackPixels.push(0x00)
 }
 
 console.log('length black pixels', blackPixels.length);
