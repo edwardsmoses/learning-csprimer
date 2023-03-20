@@ -13,8 +13,6 @@ console.log('width/height', buffer.readInt32LE(18));
 console.log('width/height', buffer.readInt32LE(22));
 
 
-
-
 const readOffset = buffer.readUInt32LE(indexPos);
 const offset = buffer.slice(indexPos, indexPos += 4);
 
@@ -24,22 +22,11 @@ console.log('pixel first read', buffer.slice(readOffset, readOffset + 3));
 console.log('pixel second read', buffer.slice(readOffset + 3, readOffset + 6));
 
 
-const blackPixels = [];
-
-
-console.log('u', buffer.slice(readOffset).length);
 const pixelData = buffer.slice(readOffset);
 const blackPixelData = pixelData.map((pixel) => {
-    // console.log('what', pixel);
     return 0x00;
 })
 
-// for (let i = 0; i < buffer.slice(readOffset).length; i++) {
-//     blackPixels.push(0x00);
-// }
-
-
-console.log('length black pixels', blackPixels.length, blackPixelData.length);
 
 fs.writeFile('blank_black.bmp', Buffer.from([...buffer.slice(0, readOffset), ...blackPixelData]), () => {
     console.log('saved successfully');
