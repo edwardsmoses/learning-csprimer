@@ -28,38 +28,40 @@ const blackPixels = [];
 
 for (let i = 0; i < 420; i++) {
 
-    //black pixel
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
+    for (let h = 0; h < 420; h++) {
+
+        //black pixel
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
 
 
-    //black pixel
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
+        //black pixel
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
+
+        //black pixel
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
 
 
-    //padding
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
+        //padding
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
 
-    //black pixel
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
+        //black pixel
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
 
+        //padding
+        blackPixels.push(0x00)
+        blackPixels.push(0x00)
+    }
 
-    //black pixel
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
-
-    //padding
-    blackPixels.push(0x00)
-    blackPixels.push(0x00)
 }
-
 console.log('length black pixels', blackPixels.length);
 
 fs.writeFile('blank_black.bmp', Buffer.from([...buffer.slice(0, 50), ...blackPixels]), () => {
