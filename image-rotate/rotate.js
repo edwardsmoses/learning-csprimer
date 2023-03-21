@@ -15,6 +15,7 @@ const rotate_buffer = (buffer, rotatedFileName) => {
 
     const readOffset = buffer.readUInt32LE(indexPos);
     const offset = buffer.slice(indexPos, indexPos += 4);
+    const width = buffer.readInt32LE(18);
 
     console.log(rotatedFileName, 'dataOffset', indexPos, offset, readOffset);
 
@@ -24,41 +25,29 @@ const rotate_buffer = (buffer, rotatedFileName) => {
 
     const pixelData = buffer.slice(readOffset);
 
+    let rotated_pixels = [];
+    let number = 0;
+    Array(width).fill(0).map((_, ty) => {
+        Array(width).fill(0).map((__, tx) => {
+            const sy = tx;
+            const sx = width - ty - 1;
 
-    let d = 0;
-    let grid = [];
+            const n = readOffset + 3 * (sy * width + sx)
+            
+            try {
+                rotated_pixels.push(...buffer.slice(n, n + 3));
+            } catch (error) {
+                console.log('known', error);
+            }
+           
+        })
+    });
 
-    //separate into chunks of three pixels
-    while (d < pixelData.length) {
-        j = d, temp = []
-        while (j < d + 3) {
-            temp.push(pixelData[j])
-            j++;
-        }
-        grid.push(temp);
-        d += 3;
-    }
+    console.log(number)
 
-    //then rotate... 
-    var newGrid = [];
-    var rowLength = Math.sqrt(grid.length);
-    newGrid.length = grid.length
+    console.log('rotated pixels', rotated_pixels.length, pixelData.length);
 
-    for (var i = 0; i < grid.length; i++) {
-        //convert to x/y
-        var x = i % rowLength;
-        var y = Math.floor(i / rowLength);
-
-        //find new x/y
-        var newX = rowLength - y - 1;
-        var newY = x;
-
-        //convert back to index
-        var newPosition = newY * rowLength + newX;
-        newGrid[newPosition] = grid[i];
-    }
-    
-    fs.writeFile(rotatedFileName, Buffer.from([...buffer.slice(0, readOffset), ...newGrid.flat()]), () => {
+    fs.writeFile(rotatedFileName, Buffer.from([...buffer.slice(0, readOffset), ...rotated_pixels]), () => {
         console.log("\n", "-------------");
 
         console.log('rotated mine successfully', rotatedFileName);
