@@ -31,13 +31,49 @@ const blackPixelData = pixelData.map(() => {
     return pixel;
 })
 
+const rotatedPixelData = pixelData.reverse();
 
-fs.writeFile('blank_white_black.bmp', Buffer.from([...buffer.slice(0, readOffset), ...blackPixelData]), () => {
-    console.log('saved successfully');
-    const blankBuffer = fs.readFileSync("blank_black.bmp")
-    console.log('blankBuffer buffer', blankBuffer);
-    console.log('blankBuffer buffer length', blankBuffer.length);
-    console.log('blankBuffer file type', blankBuffer.toString('utf8', 0, 2));
-    console.log('blankBuffer width/height', blankBuffer.readInt32LE(18));
-    console.log('blankBuffer width/height', blankBuffer.readInt32LE(22));
+
+let d = 0;
+let res = [];
+pixelData.map(() => {
+    j = d, temp = []
+    while (j < d + 3){
+        temp.push(pixelData[j])
+        j ++;
+    }
+    res.push(temp);
+    d +=3;
+})
+
+
+fs.writeFile('rotated_new_test.bmp', Buffer.from([...buffer.slice(0, readOffset), ...res.reverse().flat()]), () => {
+    console.log('rotated new successfully');
+    
+    console.log('rotated_test buffer', rotatedBuffer);
+    console.log('rotated_test buffer length', rotatedBuffer.length);
+    console.log('rotated_test file type', rotatedBuffer.toString('utf8', 0, 2));
+    console.log('rotated_test width/height', rotatedBuffer.readInt32LE(18));
+    console.log('rotated_test width/height', rotatedBuffer.readInt32LE(22));
 });
+
+fs.writeFile('rotated_test.bmp', Buffer.from([...buffer.slice(0, readOffset), ...rotatedPixelData]), () => {
+    console.log('rotated successfully');
+    const rotatedBuffer = fs.readFileSync("rotated_test.bmp")
+    console.log('rotated_test buffer', rotatedBuffer);
+    console.log('rotated_test buffer length', rotatedBuffer.length);
+    console.log('rotated_test file type', rotatedBuffer.toString('utf8', 0, 2));
+    console.log('rotated_test width/height', rotatedBuffer.readInt32LE(18));
+    console.log('rotated_test width/height', rotatedBuffer.readInt32LE(22));
+});
+
+
+// fs.writeFile('blank_white_black.bmp', Buffer.from([...buffer.slice(0, readOffset), ...blackPixelData]), () => {
+//     console.log('saved successfully');
+//     const blankBuffer = fs.readFileSync("blank_black.bmp")
+//     console.log('blankBuffer buffer', blankBuffer);
+//     console.log('blankBuffer buffer length', blankBuffer.length);
+//     console.log('blankBuffer file type', blankBuffer.toString('utf8', 0, 2));
+//     console.log('blankBuffer width/height', blankBuffer.readInt32LE(18));
+//     console.log('blankBuffer width/height', blankBuffer.readInt32LE(22));
+// });
