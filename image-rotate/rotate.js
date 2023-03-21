@@ -36,20 +36,20 @@ const rotatedPixelData = pixelData.reverse();
 
 let d = 0;
 let res = [];
-pixelData.map(() => {
+
+while (d < pixelData.length) {
     j = d, temp = []
-    while (j < d + 3){
+    while (j < d + 3) {
         temp.push(pixelData[j])
-        j ++;
+        j++;
     }
     res.push(temp);
-    d +=3;
-})
-
+    d += 3;
+}
 
 fs.writeFile('rotated_new_test.bmp', Buffer.from([...buffer.slice(0, readOffset), ...res.reverse().flat()]), () => {
     console.log('rotated new successfully');
-    
+    const rotatedBuffer = fs.readFileSync("rotated_new_test.bmp")
     console.log('rotated_test buffer', rotatedBuffer);
     console.log('rotated_test buffer length', rotatedBuffer.length);
     console.log('rotated_test file type', rotatedBuffer.toString('utf8', 0, 2));
