@@ -58,8 +58,13 @@ const rotate_buffer = (buffer, rotatedFileName) => {
         var newPosition = newY * rowLength + newX;
         newGrid[newPosition] = grid[i];
     }
+    
+    const flat = newGrid.flat();
+    console.log("\n \n \n", "-------------");
 
-    fs.writeFile(rotatedFileName, Buffer.from([...buffer.slice(0, readOffset), ...newGrid.flat()]), () => {
+    console.log(rotatedFileName, 'file length', newGrid, flat, flat.length, newGrid.length);
+
+    fs.writeFile(rotatedFileName, Buffer.from([...buffer.slice(0, readOffset), ...newGrid]), () => {
         console.log("\n \n \n", "-------------");
 
         console.log('rotated mine successfully', rotatedFileName);
