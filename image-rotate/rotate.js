@@ -23,19 +23,11 @@ console.log('pixel second read', buffer.slice(readOffset + 3, readOffset + 6));
 
 
 const pixelData = buffer.slice(readOffset);
-
-let i = 1;
-const blackPixelData = pixelData.map(() => {
-    const pixel = i % 2 == 0 ? 0xff : 0x00;
-    i++;
-    return pixel;
-})
-
 const rotatedPixelData = pixelData.reverse();
 
 
 let d = 0;
-let res = [];
+let grid = [];
 
 while (d < pixelData.length) {
     j = d, temp = []
@@ -43,20 +35,32 @@ while (d < pixelData.length) {
         temp.push(pixelData[j])
         j++;
     }
-    res.push(temp);
+    grid.push(temp);
     d += 3;
 }
 
 
-var side = Math.sqrt(res.length);
+var newGrid = [];
+var rowLength = Math.sqrt(grid.length);
+newGrid.length = grid.length
 
-var rotate = function(d,i){
-   return [Math.abs(i % side - side+1), Math.floor(i/side)]
+for (var i = 0; i < grid.length; i++)
+{
+    //convert to x/y
+    var x = i % rowLength;
+    var y = Math.floor(i / rowLength);
+
+    //find new x/y
+    var newX = rowLength - y - 1;
+    var newY = x;
+
+    //convert back to index
+    var newPosition = newY * rowLength + newX;
+    newGrid[newPosition] = grid[i];
 }
-res = res.map(rotate);
 
 
-fs.writeFile('rotated_new_test.bmp', Buffer.from([...buffer.slice(0, readOffset), ...res.flat()]), () => {
+fs.writeFile('rotated_new_test.bmp', Buffer.from([...buffer.slice(0, readOffset), ...newGrid.flat()]), () => {
     console.log('rotated new_1 successfully');
     const rotatedBuffer = fs.readFileSync("rotated_new_test.bmp")
     console.log('rotated_test buffer', rotatedBuffer);
