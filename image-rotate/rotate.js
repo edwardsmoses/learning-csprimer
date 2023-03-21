@@ -47,10 +47,22 @@ while (d < pixelData.length) {
     d += 3;
 }
 
-const reversed_Res = res[0].map((val, index) => res.map(row => row[index]).reverse())
+function rotateClockwise(a) {
+    var n=a.length;
+    for (var i=0; i<n/2; i++) {
+        for (var j=i; j<n-i-1; j++) {
+            var tmp=a[i][j];
+            a[i][j]=a[n-j-1][i];
+            a[n-j-1][i]=a[n-i-1][n-j-1];
+            a[n-i-1][n-j-1]=a[j][n-i-1];
+            a[j][n-i-1]=tmp;
+        }
+    }
+    return a;
+}
 
 
-fs.writeFile('rotated_new_test.bmp', Buffer.from([...buffer.slice(0, readOffset), ...reversed_Res.flat()]), () => {
+fs.writeFile('rotated_new_test.bmp', Buffer.from([...buffer.slice(0, readOffset), ...rotateClockwise(res).flat()]), () => {
     console.log('rotated new_1 successfully');
     const rotatedBuffer = fs.readFileSync("rotated_new_test.bmp")
     console.log('rotated_test buffer', rotatedBuffer);
