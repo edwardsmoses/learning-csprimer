@@ -40,7 +40,6 @@ const rotate_buffer = (buffer, rotatedFileName) => {
     }
 
     //then rotate... 
-
     var newGrid = [];
     var rowLength = Math.sqrt(grid.length);
     newGrid.length = grid.length
@@ -59,22 +58,17 @@ const rotate_buffer = (buffer, rotatedFileName) => {
         newGrid[newPosition] = grid[i];
     }
     
-    const flat = newGrid.flat();
-    console.log("\n \n \n", "-------------");
-
-    console.log(rotatedFileName, 'file length', newGrid, flat, flat.length, newGrid.length);
-
-    fs.writeFile(rotatedFileName, Buffer.from([...buffer.slice(0, readOffset), ...newGrid]), () => {
-        console.log("\n \n \n", "-------------");
+    fs.writeFile(rotatedFileName, Buffer.from([...buffer.slice(0, readOffset), ...newGrid.flat()]), () => {
+        console.log("\n", "-------------");
 
         console.log('rotated mine successfully', rotatedFileName);
         const rotatedBuffer = fs.readFileSync(rotatedFileName)
-        console.log(rotatedFileName, 'buffer length', rotatedBuffer.length);
 
+        console.log(rotatedFileName, 'buffer length', rotatedBuffer.length);
         console.log(rotatedFileName, 'rotated_test file type', rotatedBuffer.toString('utf8', 0, 2));
         console.log(rotatedFileName, 'rotated_test width/height', rotatedBuffer.readInt32LE(18));
         console.log(rotatedFileName, 'rotated_test width/height', rotatedBuffer.readInt32LE(22));
-        console.log("\n \n \n", "-------------");
+        console.log("\n", "-------------");
 
     });
 
