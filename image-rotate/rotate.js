@@ -33,19 +33,11 @@ const rotate_buffer = (buffer, rotatedFileName) => {
             const sx = width - ty - 1;
 
             const n = readOffset + 3 * (sy * width + sx)
-            
-            try {
-                rotated_pixels.push(...buffer.slice(n, n + 3));
-            } catch (error) {
-                console.log('known', error);
-            }
-           
+
+            rotated_pixels.push(...buffer.slice(n, n + 3));
         })
     });
 
-    console.log(number)
-
-    console.log('rotated pixels', rotated_pixels.length, pixelData.length);
 
     fs.writeFile(rotatedFileName, Buffer.from([...buffer.slice(0, readOffset), ...rotated_pixels]), () => {
         console.log("\n", "-------------");
@@ -57,8 +49,6 @@ const rotate_buffer = (buffer, rotatedFileName) => {
         console.log(rotatedFileName, 'rotated_test file type', rotatedBuffer.toString('utf8', 0, 2));
         console.log(rotatedFileName, 'rotated_test width/height', rotatedBuffer.readInt32LE(18));
         console.log(rotatedFileName, 'rotated_test width/height', rotatedBuffer.readInt32LE(22));
-        console.log("\n", "-------------");
-
     });
 
 }
