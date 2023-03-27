@@ -13,6 +13,7 @@ const parsePCAP = (buffer) => {
     const thirdByte = buffer.readUInt32LE(indexPos + 8);
     console.log('first byte', thirdByte);
 
+    console.log('header bytes', buffer.slice(0, 24))
 
 }
 
