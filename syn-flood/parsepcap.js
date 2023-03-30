@@ -35,6 +35,9 @@ const parsePCAP = (rbuffer) => {
 
 
     let packetCount = 0;
+    let initiatedConn = 0
+    let ackedConn = 0;
+
     while (true) {
 
         const perPacketHeader = buffer.slice(indexPos, indexPos += 16);
@@ -67,19 +70,26 @@ const parsePCAP = (rbuffer) => {
         const ihl = (packet[4] & 0x0f) << 2; //shift by 2 bytes 
         // console.log('ihl', ihl, ihl == 20); // no options
 
-        const sourcePort = packet.readInt16BE(24);
+        const sourcePort = packet.readUint16BE(24);
         const destinationPort = packet.readInt16LE(26);
 
-        const flags = packet.slice(30, 38);
-        console.log('syn', flags[4] & 0x0002, flags[4] & 0x0002 > 0);
-        console.log('ack', flags[4] & 0x0010, flags[4] & 0x0010 > 0);
+        const flags = packet.slice(36, 38);
+        // console.log('flags', flags);
+        // console.log('syn', flags & 0x0002);
+        // console.log('ack', flags & 0x0010);
 
         const syn = flags & 0x0002 > 0
         const ack = flags & 0x0010 > 0
 
-        console.log('source and destination port', sourcePort, '->', destinationPort, syn ? "SYN" : "-", ack ? "ACK" : "-");
+        // console.log('src -> dest ', sourcePort, '->', destinationPort, syn ? "SYN" : "-", ack ? "ACK" : "-");
 
 
+        if (destinationPort == 80 && syn) {
+            initiatedConn += 1;
+        }
+        if (sourcePort == 80 && ack) {
+            ackedConn += 1;
+        }
 
 
 
@@ -87,6 +97,7 @@ const parsePCAP = (rbuffer) => {
     }
 
     console.log('how many Packets parsed', packetCount);
+    console.log("how many Packets connections init'd and acked", initiatedConn, ackedConn, (ackedConn / initiatedConn), (ackedConn / initiatedConn) * 100);
 
 }
 
