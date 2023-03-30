@@ -70,8 +70,13 @@ const parsePCAP = (rbuffer) => {
         const ihl = (packet[4] & 0x0f) << 2; //shift by 2 bytes 
         // console.log('ihl', ihl, ihl == 20); // no options
 
-        const sourcePort = packet.readUint16BE(24);
-        const destinationPort = packet.readInt16LE(26);
+        const tcpHeader = packet.slice(24, 38);
+
+        const sourcePort = tcpHeader.readUint16BE(0);
+        const destinationPort = tcpHeader.readUint16BE(2);
+        
+
+
 
         const flags = packet.slice(36, 38);
         // console.log('flags', flags);
@@ -81,7 +86,7 @@ const parsePCAP = (rbuffer) => {
         const syn = flags & 0x0002 > 0
         const ack = flags & 0x0010 > 0
 
-        // console.log('src -> dest ', sourcePort, '->', destinationPort, syn ? "SYN" : "-", ack ? "ACK" : "-");
+        console.log('src -> dest ', sourcePort, '->', destinationPort, syn ? "SYN" : "-", ack ? "ACK" : "-");
 
 
         if (destinationPort == 80 && syn) {
