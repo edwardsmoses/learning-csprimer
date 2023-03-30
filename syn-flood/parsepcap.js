@@ -38,7 +38,7 @@ const parsePCAP = (rbuffer) => {
     while (true) {
 
         const perPacketHeader = buffer.slice(indexPos, indexPos += 16);
-        console.log('packet header', perPacketHeader);
+        // console.log('packet header', perPacketHeader);
         
 
         //if no bytes to read, break out of the loop
@@ -53,12 +53,12 @@ const parsePCAP = (rbuffer) => {
         const packetLength = perPacketHeader.readInt32LE(8);
         const packetUnTruncLength = perPacketHeader.readInt32LE(12);
 
-        console.log('packet length', packetLength, packetUnTruncLength);
-        console.log('is Packet Length Matching the Untruncated length', packetLength == packetUnTruncLength);
+        // console.log('packet length', packetLength, packetUnTruncLength);
+        // console.log('is Packet Length Matching the Untruncated length', packetLength == packetUnTruncLength);
 
         //read the Packet info, using the Packet Length
         const packet = buffer.slice(indexPos, indexPos += packetLength);
-        console.log('packet', packet);
+        // console.log('packet', packet);
     }
 
     console.log('how many Packets parsed', packetCount);
