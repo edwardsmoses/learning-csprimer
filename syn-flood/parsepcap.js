@@ -39,7 +39,7 @@ const parsePCAP = (rbuffer) => {
 
         const perPacketHeader = buffer.slice(indexPos, indexPos += 16);
         // console.log('packet header', perPacketHeader);
-        
+
         //if no bytes to read, break out of the loop
         if (perPacketHeader.length == 0) {
             break;
@@ -67,14 +67,20 @@ const parsePCAP = (rbuffer) => {
         const ihl = (packet[4] & 0x0f) << 2; //shift by 2 bytes 
         // console.log('ihl', ihl, ihl == 20); // no options
 
-        
         const sourcePort = packet.readInt16BE(24);
         const destinationPort = packet.readInt16LE(26);
 
-        console.log('source and destination port', sourcePort, '->', destinationPort);
+        const flags = packet.slice(30, 38);
+        console.log('syn', flags[4] & 0x0002, flags[4] & 0x0002 > 0);
+        console.log('ack', flags[4] & 0x0010, flags[4] & 0x0010 > 0);
 
-        const flags = packet.readInt32LE(34);
-        console.log('packet flags', flags);
+        const syn = flags & 0x0002 > 0
+        const ack = flags & 0x0010 > 0
+
+        console.log('source and destination port', sourcePort, '->', destinationPort, syn ? "SYN" : "-", ack ? "ACK" : "-");
+
+
+
 
 
 
