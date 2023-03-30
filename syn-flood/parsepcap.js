@@ -40,7 +40,6 @@ const parsePCAP = (rbuffer) => {
         const perPacketHeader = buffer.slice(indexPos, indexPos += 16);
         // console.log('packet header', perPacketHeader);
         
-
         //if no bytes to read, break out of the loop
         if (perPacketHeader.length == 0) {
             break;
@@ -59,11 +58,13 @@ const parsePCAP = (rbuffer) => {
         //read the Packet info, using the Packet Length
         const packet = buffer.slice(indexPos, indexPos += packetLength);
         // console.log('packet', packet);
+
+        //read the IPv4 value
+        const ipV4_Value = packet.readInt32LE(0);
+        // console.log('ipv4 val', ipV4_Value, ipV4_Value == 2);
     }
 
     console.log('how many Packets parsed', packetCount);
-
-
 
 }
 
