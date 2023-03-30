@@ -62,6 +62,10 @@ const parsePCAP = (rbuffer) => {
         //read the IPv4 value
         const ipV4_Value = packet.readInt32LE(0);
         // console.log('ipv4 val', ipV4_Value, ipV4_Value == 2);
+
+        //read the iHL value (internet header length)
+        const ihl = (packet[4] & 0x0f) << 2; //shift by 2 bytes 
+        console.log('ihl', ihl, ihl == 20); // no options
     }
 
     console.log('how many Packets parsed', packetCount);
