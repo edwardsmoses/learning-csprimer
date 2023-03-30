@@ -23,7 +23,7 @@ const parsePCAP = (rbuffer) => {
     indexPos += 4; //increase index position
 
     //read the protocol 'Major version' and 'Minor version'
-    console.log('Pcap Protocol version ' + buffer.readInt16LE(indexPos) + "." + buffer.readInt16LE(indexPos += 2))
+    console.log('Pcap Protocol version ' + buffer.readInt16LE(indexPos) + "." + buffer.readInt16LE(indexPos += 2));
 
     //read the link layer header type value
     indexPos += 4;
@@ -35,25 +35,23 @@ const parsePCAP = (rbuffer) => {
 
 
     let packetCount = 0;
-    // while (true) {
+    while (true) {
 
-        // const perPacketHeader = buffer.slice(indexPos, indexPos += 16);
-        // console.log('packet header', perPacketHeader);
-
-        const packetLength = buffer.readUInt32LE(indexPos += 12);
-        const packetUnTruncLength = buffer.readUInt32LE(indexPos += 4);
+        const perPacketHeader = buffer.slice(indexPos, indexPos += 16);
+        console.log('packet header', perPacketHeader);
+        
 
         //if no bytes to read, break out of the loop
-        // if (perPacketHeader.length == 0) {
-        //     break;
-        // }
+        if (perPacketHeader.length == 0) {
+            break;
+        }
 
         //if not, and bytes to read.. 
         //we're at the next packet
         packetCount += 1;
 
-        // const packetLength = perPacketHeader.readInt32LE(8);
-        // const packetUnTruncLength = perPacketHeader.readInt32LE(8);
+        const packetLength = perPacketHeader.readInt32LE(8);
+        const packetUnTruncLength = perPacketHeader.readInt32LE(12);
 
         console.log('packet length', packetLength, packetUnTruncLength);
         console.log('is Packet Length Matching the Untruncated length', packetLength == packetUnTruncLength);
@@ -61,8 +59,9 @@ const parsePCAP = (rbuffer) => {
         //read the Packet info, using the Packet Length
         const packet = buffer.slice(indexPos, indexPos += packetLength);
         console.log('packet', packet);
-    // }
+    }
 
+    console.log('how many Packets parsed', packetCount);
 
 
 
