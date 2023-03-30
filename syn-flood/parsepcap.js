@@ -26,8 +26,8 @@ const parsePCAP = (rbuffer) => {
     console.log('Pcap Protocol version ' + buffer.readInt16LE(indexPos) + "." + buffer.readInt16LE(indexPos += 2));
 
     //read the link layer header type value
-    indexPos += 4;
-    console.log('is Link Layer header type match Loopback interface', buffer.slice(indexPos - 4, indexPos), buffer.readUInt32LE(indexPos) == 0);
+    indexPos += 18;
+    console.log('is Link Layer header type match Loopback interface', buffer.slice(indexPos - 4, indexPos), buffer.readUInt32LE(indexPos), buffer.readUInt32LE(indexPos) == 0);
 
     //read the link layer header value
     // indexPos += 4;
