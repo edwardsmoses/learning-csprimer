@@ -65,7 +65,19 @@ const parsePCAP = (rbuffer) => {
 
         //read the iHL value (internet header length)
         const ihl = (packet[4] & 0x0f) << 2; //shift by 2 bytes 
-        console.log('ihl', ihl, ihl == 20); // no options
+        // console.log('ihl', ihl, ihl == 20); // no options
+
+        
+        const sourcePort = packet.readInt16BE(24);
+        const destinationPort = packet.readInt16LE(26);
+
+        console.log('source and destination port', sourcePort, '->', destinationPort);
+
+        const flags = packet.readInt32LE(34);
+        console.log('packet flags', flags);
+
+
+
     }
 
     console.log('how many Packets parsed', packetCount);
