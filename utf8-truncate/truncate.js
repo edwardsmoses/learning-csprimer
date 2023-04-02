@@ -10,7 +10,7 @@ const truncate = (rBuffer) => {
 
 
     //split in lines of text .. 
-    // the lines are seperated using LF ('Line feed'), and the hex code is 0A
+    // the lines are separated using LF ('Line feed'), and the hex code is 0A
     const lines = [];
     let line = [];
 
@@ -23,10 +23,18 @@ const truncate = (rBuffer) => {
         }
     });
 
-    console.log('lines', lines, lines.length);
 
+    //map the lines, 
+    lines.map((line, index) => {
+        const numberOfBytesToTruncate = line[0];
+        console.log('line', index, 'number', numberOfBytesToTruncate);
+        
+        line.splice(0, 1).splice(0, numberOfBytesToTruncate);
 
+        console.log('truncated line', index, line);
+    });
 
+    
 
     fs.writeFile("expected_mine", Buffer.from(buffer), () => {
 
