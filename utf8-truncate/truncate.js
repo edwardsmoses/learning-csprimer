@@ -50,5 +50,4 @@ const truncate = (rBuffer) => {
 
 
 const buffer = fs.readFileSync("cases")
-
 truncate(buffer);
