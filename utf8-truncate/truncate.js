@@ -26,11 +26,13 @@ const truncate = (rBuffer) => {
     //to truncate
     const expectedLines = lines.map((line, index) => {
         const lineBuffer = Buffer.from(line);
-        console.log(line[0]);
+        
+        const numberOfBytesToTruncate = line[0];
+        console.log(numberOfBytesToTruncate);
         
 
         const truncatedLine = lineBuffer.filter((_, i) => i !== 0);
-        
+
 
 
         return [...truncatedLine, 0x0a]; //add the delimiter...
