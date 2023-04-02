@@ -3,6 +3,16 @@ var fs = require('fs');
 let indexPos = 2;
 
 
+const truncateLine = (stringBuffer, number) => {
+    if (number >= stringBuffer.length) {
+        return stringBuffer;
+    }
+    while (number > 0 && stringBuffer[number] & 0xc0 == 0x80) {
+        number -= 1;
+    }
+    return stringBuffer.slice(0, number);
+}
+
 
 const truncate = (rBuffer) => {
 
@@ -26,16 +36,16 @@ const truncate = (rBuffer) => {
     //to truncate
     const expectedLines = lines.map((line, index) => {
         const lineBuffer = Buffer.from(line);
-        
-        const numberOfBytesToTruncate = line[0];
-        console.log(numberOfBytesToTruncate);
-        
 
         const truncatedLine = lineBuffer.filter((_, i) => i !== 0);
+        const numberOfBytesToTruncate = line[0];
+        console.log(numberOfBytesToTruncate);
 
 
 
-        return [...truncatedLine, 0x0a]; //add the delimiter...
+
+
+        return [...truncateLine(truncatedLine, numberOfBytesToTruncate), 0x0a]; //add the delimiter...
     });
 
 
