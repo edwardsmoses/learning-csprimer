@@ -2,12 +2,12 @@ import struct
 
 def conceal (val): 
     bs = val.encode('utf8')
-    print("val", val, type(val), bs, len(bs));
+    n = len(bs)
 
 
     first = b'\x7f'
-    second = (0xf8 ^ len(bs)).to_bytes(1, 'big')
-    padding = b'\0x00' * (6 - len(bs))
+    second = (0xf8 ^ n).to_bytes(1, 'big')
+    padding = b'\x00' * (6 - n)
     payload = bs
     
     print('padding', len(first), len(second), len(padding), len(first + second + padding + payload))
