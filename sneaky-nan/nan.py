@@ -4,13 +4,11 @@ def conceal (val):
     bs = val.encode('utf8')
     n = len(bs)
 
-
     first = b'\x7f'
     second = (0xf8 ^ n).to_bytes(1, 'big')
     padding = b'\x00' * (6 - n)
     payload = bs
     
-    print('padding', len(first), len(second), len(padding), len(first + second + padding + payload))
     return struct.unpack('>d', first + second + padding + payload)[0]
 
 
