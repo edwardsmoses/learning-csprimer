@@ -1,6 +1,8 @@
 import struct
 
 def conceal (val): 
+    print("concealed val", val)
+
     bs = val.encode('utf8')
     n = len(bs)
 
@@ -8,15 +10,25 @@ def conceal (val):
     second = (0xf8 ^ n).to_bytes(1, 'big')
     padding = b'\x00' * (6 - n)
     payload = bs
+
+    nan = struct.unpack('>d', first + second + padding + payload)[0];
+    print("nan val", type(nan))
     
-    return struct.unpack('>d', first + second + padding + payload)[0]
+    return nan;
 
 
 def reveal (val):
-    print('reveal val', val, type(val));
-    return val
+    bs = struct.pack('>d', val)
+    n = bs[1] & 0x07
+    return bs[-n:].decode('utf8')
+    
 
-print(struct.pack('d', float('nan')))
 
 concealed = conceal("hello");
+print("revealed", reveal(concealed));
+
+concealed = conceal("secret");
+print("revealed", reveal(concealed));
+
+concealed = conceal("none");
 print("revealed", reveal(concealed));
