@@ -7,5 +7,5 @@ int main(int argc, char **argv)
 {
     printf("Hello, World! \n");
     printf("%d * %d = %d\n", N, N, square(N));
-    return 1;
+    return 0;
 }
