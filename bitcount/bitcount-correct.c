@@ -4,8 +4,18 @@
 
 int bitcount(int val)
 {
+    int count = 0;
 
-    return -1;
+    while (val)
+    {
+        if (val & 0x01)
+        {
+            count += 1;
+        }
+        val >>= 1;
+    }
+
+    return count;
 }
 
 int main()
