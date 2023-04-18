@@ -23,6 +23,6 @@ int main()
     assert(bitcount(3) == 2);
     assert(bitcount(8) == 1);
     // harder case:
-    // assert(bitcount(0xffffffff) == 32);
+    assert(bitcount(0xffffffff) == 32);
     printf("OK\n");
 }
