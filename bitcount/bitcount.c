@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+// first convert the decimal to its' binary version
 long long convert(int n)
 {
     long long bin = 0;
@@ -21,8 +22,10 @@ long long convert(int n)
 int bitcount(int val)
 {
 
+    // converted to binary
     long bin = convert(val);
 
+    // convert the binary to string
     char data[128];
     int count = 0;
 
@@ -30,26 +33,18 @@ int bitcount(int val)
     int length = strlen(data);
     for (int i = 0; i < length; i++)
     {
-        printf("b%c", data[i]);
+        // and when it's in string format, check if it's a 1, and count if so.
         if (data[i] == '1')
         {
             count = count + 1;
         }
     }
 
-    printf("a%i,c%i", count, val);
-    printf("\n");
-
     return count;
 }
 
 int main()
 {
-
-    bitcount(0);
-    bitcount(1);
-    bitcount(3);
-    bitcount(8);
 
     assert(bitcount(0) == 0);
     assert(bitcount(1) == 1);
