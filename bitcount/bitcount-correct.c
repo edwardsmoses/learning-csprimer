@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int bitcount(int val)
+int bitcount(unsigned int val)
 {
     int count = 0;
 
