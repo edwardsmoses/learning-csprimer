@@ -8,10 +8,7 @@ int bitcount(int val)
 
     while (val)
     {
-        if (val & 0x01)
-        {
-            count += 1;
-        }
+        count += val & 0x01;
         val >>= 1;
     }
 
