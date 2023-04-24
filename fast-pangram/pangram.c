@@ -3,21 +3,20 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#define MASK 0x07fffffe
 bool ispangram(char *s)
 {
   __uint32_t bs = 0;
   char c;
 
-  while (*s != '\n')
+  while ((c = *s++) != '\0')
   {
-    c = tolower(*s++);
-    if (c < 'a' || c > 'z')
-      continue;
-
-    bs |= 1 << (c - 'a');
+    if (c < '@')
+      continue; // ignore first 64 chars in ascii table
+    bs |= 1 << (c & 0x1f);
   }
 
-  return bs == 0x03ffffff;
+  return (bs & MASK) == MASK;
 }
 
 int main()
