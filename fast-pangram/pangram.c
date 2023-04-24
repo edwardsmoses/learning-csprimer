@@ -1,18 +1,32 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
+bool ispangram(char *s)
+{
+  __uint32_t bs = 0;
+  char c;
 
-bool ispangram(char *s) {
-  // TODO implement this!
-  return false;
+  while (*s != '\n')
+  {
+    c = tolower(*s++);
+    if (c < 'a' || c > 'z')
+      continue;
+
+    bs |= 1 << (c - 'a');
+  }
+
+  return bs == 0x03ffffff;
 }
 
-int main() {
+int main()
+{
   size_t len;
   ssize_t read;
   char *line = NULL;
-  while ((read = getline(&line, &len, stdin)) != -1) {
+  while ((read = getline(&line, &len, stdin)) != -1)
+  {
     if (ispangram(line))
       printf("%s", line);
   }
