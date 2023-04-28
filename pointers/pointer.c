@@ -2,5 +2,7 @@
 
 int main(int argc)
 {
-    printf("Hello, Pointer! \n");
+    int n = 5;
+
+    printf("n = %d, &n = %p\n", n, &n);
 }
