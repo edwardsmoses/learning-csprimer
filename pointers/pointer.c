@@ -5,5 +5,7 @@ int main(int argc)
     int n = 5;
     int *p = &n;
 
-    printf("n = %d, &n = %p\n", n, p);
+    int foo = *p;
+
+    printf("n = %d, &n = %p, :foo, %d\n", n, p, foo);
 }
