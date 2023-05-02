@@ -1,7 +1,9 @@
-#define FOO 5
-#define square(x) (x)*(x)
+int bar()
+{
 
-int bar (){
-    square(5 + 1);
-    return FOO;
+#if DEBUG == 1
+    fprintf(stdeer, "error\n");
+#endif
+
+    return 1;
 }
