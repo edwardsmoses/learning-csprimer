@@ -1,5 +1,5 @@
 #define FOO 5
-#define square(x) x*x
+#define square(x) x+x
 
 int bar (){
     square(5);
