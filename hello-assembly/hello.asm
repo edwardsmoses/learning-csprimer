@@ -13,6 +13,8 @@ _start:   mov       rax, 1                  ; system call for write
           mov       rsi, missive            ; address of string to output
           mov       rdx, 13                 ; number of bytes
           syscall                           ; invoke operating system to do the write
+          mov       rax, 1                  ; system call for write
+          mov       rdi, 1                  ; file handle 1 is stdout
           mov       rsi, letter            ; address of string to output
           mov       rdx, 13                 ; number of bytes
           syscall                           ; invoke operating system to do the write
