@@ -2,18 +2,28 @@ console.log('starting');
 
 const net = require('node:net');
 
-net.createServer(function(conn) {
-    console.log('ECHO_SERVER: CONN: new connection');
-    conn.on('ready', function() {
-        console.log('ECHO_SERVER: CONN: started');
-    });
-    conn.on('end', function() {
-        console.log('ECHO_SERVER: CONN: disconnected');
-    });
-    conn.on('data', function(data) {
-        console.log('ECHO_SERVER: CONN: GOT DATA: ' + data);
-        conn.write(data);
-    });
-}).listen(8888, function() {
-    console.log('ECHO_SERVER STARTED');
+const server = net.createServer((socket) => {
+    socket.end('goodbye\n');
+})
+
+server.on('listening', () => {
+   console.log('started listening');
 });
+
+server.on('connection', () => {
+    console.log('connection noticed');
+ });
+
+server.on('error', (err) => {
+    // Handle errors here.
+    throw err;
+});
+
+// Grab an arbitrary unused port.
+server.listen({
+    port: 8888,
+    host: '127.0.0.1',
+    
+}, () => {
+    console.log('opened server on', server.address());
+}); 
