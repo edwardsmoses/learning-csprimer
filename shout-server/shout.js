@@ -2,4 +2,18 @@ console.log('starting');
 
 const net = require('node:net');
 
-console.log('net', net)
+net.createServer(function(conn) {
+    console.log('ECHO_SERVER: CONN: new connection');
+    conn.on('ready', function() {
+        console.log('ECHO_SERVER: CONN: started');
+    });
+    conn.on('end', function() {
+        console.log('ECHO_SERVER: CONN: disconnected');
+    });
+    conn.on('data', function(data) {
+        console.log('ECHO_SERVER: CONN: GOT DATA: ' + data);
+        conn.write(data);
+    });
+}).listen(8888, function() {
+    console.log('ECHO_SERVER STARTED');
+});
