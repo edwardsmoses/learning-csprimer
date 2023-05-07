@@ -12,6 +12,7 @@ server.on('error', (err) => {
 
 server.on('message', (msg, rinfo) => {
     console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+    server.send('HELLO', rinfo.port, rinfo.address);
 });
 
 server.on('listening', () => {
