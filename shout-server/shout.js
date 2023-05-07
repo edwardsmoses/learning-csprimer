@@ -1,29 +1,32 @@
 console.log('starting');
 
-const net = require('node:net');
+const dgram = require('node:dgram');
 
-const server = net.createServer((socket) => {
-    socket.end('goodbye\n');
-})
 
-server.on('listening', () => {
-   console.log('started listening');
-});
-
-server.on('connection', () => {
-    console.log('connection noticed');
- });
+const server = dgram.createSocket('udp4');
 
 server.on('error', (err) => {
-    // Handle errors here.
-    throw err;
+    console.error(`server error:\n${err.stack}`);
+    server.close();
 });
 
-// Grab an arbitrary unused port.
-server.listen({
-    port: 8888,
-    host: '127.0.0.1',
-    
-}, () => {
-    console.log('opened server on', server.address());
-}); 
+server.on('message', (msg, rinfo) => {
+    console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+});
+
+server.on('listening', () => {
+    const address = server.address();
+    console.log(`server listening ${address.address}:${address.port}`);
+});
+
+server.on('connect', () => {
+    const address = server.address();
+    console.log(`server connected to from ${address.address}:${address.port}`);
+});
+
+server.on('close', () => {
+    const address = server.address();
+    console.log(`client closed connection - ${address.address}:${address.port}`);
+});
+
+server.bind(8888);
