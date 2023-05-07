@@ -1,3 +1,5 @@
+//docs: https://nodejs.org/api/dgram.html#socketbindport-address-callback
+
 const dgram = require('node:dgram');
 
 const server = dgram.createSocket('udp4');
