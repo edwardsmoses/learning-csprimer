@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #define SLEEP_SEC 3
 #define NUM_MULS 100000000
@@ -7,16 +8,25 @@
 #define MALLOC_SIZE 1000
 
 // TODO define this struct
-struct profile_times {
+struct profile_times
+{
+  int process_id;
 };
 
 // TODO populate the given struct with starting information
-void profile_start(struct profile_times *t) {}
+void profile_start(struct profile_times *t)
+{
+  t->process_id = getpid();
+}
 
 // TODO given starting information, compute and log differences to now
-void profile_log(struct profile_times *t) {}
+void profile_log(struct profile_times *t)
+{
+  printf("pid %i \n", t->process_id);
+}
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   struct profile_times t;
 
   // TODO profile doing a bunch of floating point muls
