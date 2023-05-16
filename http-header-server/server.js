@@ -9,6 +9,11 @@ net.createServer(function (conn) {
 
         conn.write(
             'HTTP/1.0 200 OK\r\n' +
+            'Content-Type: application/json\r\n' +
+            '\r\n'
+        );
+        conn.write(
+            '{"success":"true"}\r\n' +
             '\r\n'
         );
         conn.end();
