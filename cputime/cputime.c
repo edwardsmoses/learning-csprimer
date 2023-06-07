@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/processor.h>
+ #include <sched.h>
 #include <unistd.h>
 #include <stdio.h>
 
@@ -27,7 +27,7 @@ struct profile_times
 void profile_start(struct profile_times *t)
 {
   t->process_id = getpid();
-  t->cpu_id = getcpuid();
+  t->cpu_id = sched_getcpu();
 
   struct timeval tv;
   struct rusage ru;
