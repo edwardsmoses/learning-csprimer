@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/processor.h>
 #include <unistd.h>
 #include <stdio.h>
 
@@ -16,6 +17,7 @@
 struct profile_times
 {
   int process_id;
+  int cpu_id
   uint64_t real_usec;
   uint64_t user_usec;
   uint64_t system_usec;
@@ -25,6 +27,7 @@ struct profile_times
 void profile_start(struct profile_times *t)
 {
   t->process_id = getpid();
+  t->cpu_id = getcpuid();
 
   struct timeval tv;
   struct rusage ru;
@@ -58,6 +61,8 @@ void profile_log(struct profile_times *t)
 
 
   printf("[pid %i] \t", t->process_id);
+  printf("[cpu_id %i] \t", t->cpu_id);
+
   printf("real %0.03f \t", real_diff / 1000000.0);
   printf("user %0.03f \t", usec_diff / 1000000.0);
   printf("system %0.03f \t \n", sys_diff / 1000000.0);
