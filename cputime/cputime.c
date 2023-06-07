@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <sys/resource.h>
- #include <sched.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <cpuid.h>
 
 #define SLEEP_SEC 3
 #define NUM_MULS 100000000
@@ -23,11 +23,18 @@ struct profile_times
   uint64_t system_usec;
 };
 
+unsigned getcpu () {
+  unsigned reg[4];
+  __cpuid_count(1, 0, reg[0], reg[1], reg[2], reg[3]);
+
+  return reg[1] >> 24;
+}
+
 // TODO populate the given struct with starting information
 void profile_start(struct profile_times *t)
 {
   t->process_id = getpid();
-  t->cpu_id = sched_getcpu();
+  t->cpu_id = getcpu();
 
   struct timeval tv;
   struct rusage ru;
