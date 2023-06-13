@@ -1,4 +1,3 @@
-const net = require('node:net');
 const dgram = require('node:dgram');
 
 
@@ -81,7 +80,8 @@ function parseDNSResponse(response) {
     const parsedResponse = {
         transactionId,
         flags,
-        answers: []
+        answers: [],
+        aRecords: [],
     };
 
     let currentPosition = 12; // Start position for answers in the response
@@ -109,12 +109,19 @@ function parseDNSResponse(response) {
         currentPosition += 2;
 
         // Read the data (IP address in this case) from the response
-        answer.data = response.slice(currentPosition, currentPosition + dataLength).join('.');
+        console.log('what is you', answer);
+        if (answer.type === 1 && answer.class === 1) { // Check if it's an A record (type: 1, class: 1)
+            answer.data = `${response[currentPosition]}.${response[currentPosition + 1]}.${response[currentPosition + 2]}.${response[currentPosition + 3]}`;
+            parsedResponse.aRecords.push(answer.data);
+        }
+
 
         currentPosition += dataLength;
 
         parsedResponse.answers.push(answer);
     }
+
+    
 
     return parsedResponse;
 }
