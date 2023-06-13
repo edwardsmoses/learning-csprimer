@@ -110,10 +110,8 @@ function parseDNSResponse(response) {
 
         // Read the data (IP address in this case) from the response
         console.log('what is you', answer);
-        if (answer.type === 1 && answer.class === 1) { // Check if it's an A record (type: 1, class: 1)
-            answer.data = `${response[currentPosition]}.${response[currentPosition + 1]}.${response[currentPosition + 2]}.${response[currentPosition + 3]}`;
-            parsedResponse.aRecords.push(answer.data);
-        }
+        answer.data = `${response[currentPosition]}.${response[currentPosition + 1]}.${response[currentPosition + 2]}.${response[currentPosition + 3]}`;
+        parsedResponse.aRecords.push(answer.data);
 
 
         currentPosition += dataLength;
@@ -121,7 +119,7 @@ function parseDNSResponse(response) {
         parsedResponse.answers.push(answer);
     }
 
-    
+
 
     return parsedResponse;
 }
