@@ -18,129 +18,57 @@ readline.question(`What's the address we want to query? \t`, address => {
     console.log(`Hi ${address}!`);
     readline.close();
 
-    const client = dgram.createSocket('udp4');
-
-    // Create DNS query packet
-    const transactionId = Math.floor(Math.random() * 65536);
-    const flags = 0x0100;
-    const questions = 1;
-
-    const packet = createDNSQueryPacket(transactionId, flags, questions, address);
-
-    const dnsServer = '8.8.8.8'; // DNS server IP address
-    const dnsPort = 53; // DNS server port
-
-    client.send(packet, 0, packet.length, dnsPort, dnsServer, (error, response) => {
-        console.error('DNS query failed:', error);
-        console.error('DNS query response:', response);
-
-        const parsedResponse = parseDNSResponse(response);
-        console.log('in function: parsed DNS Response', parsedResponse);
-    });
-
-    client.on('message', (response) => {
-        
-        client.close();
-    });
-
-    client.on('error', (error) => {
-        console.error('DNS query failed:', error);
-
-        client.close();
-    });
-
-
-
-
+    sendDNSQuery(address)
+        .then((parsedResponse) => {
+            console.log('Parsed DNS response:', parsedResponse);
+        })
+        .catch((error) => {
+            console.error('DNS query failed:', error);
+        });
 });
 
 
+const dnsServer = '8.8.8.8'; // DNS server IP address
+const dnsPort = 53; // DNS server port
 
-// Helper functions
-
-// Create the DNS message header
-function createHeader(transactionId, flags, questionCount) {
-    const header = new Uint8Array(12);
+// Function to create DNS query packet
+function createDNSQueryPacket(transactionId, flags, questions, domainName) {
+    const packet = Buffer.alloc(12 + domainName.length + 2 + 4);
 
     // Set transaction ID
-    header[0] = (transactionId >> 8) & 0xff; // First 8 bits
-    header[1] = transactionId & 0xff; // Last 8 bits
+    packet.writeUInt16BE(transactionId, 0);
 
     // Set flags
-    header[2] = (flags >> 8) & 0xff; // First 8 bits
-    header[3] = flags & 0xff; // Last 8 bits
+    packet.writeUInt16BE(flags, 2);
 
     // Set question count
-    header[4] = (questionCount >> 8) & 0xff; // First 8 bits
-    header[5] = questionCount & 0xff; // Last 8 bits
+    packet.writeUInt16BE(questions, 4);
 
-    // Set other header fields to zero
+    // Set other fields to zero
+    packet.writeUInt16BE(0, 6);
+    packet.writeUInt16BE(0, 8);
+    packet.writeUInt16BE(0, 10);
 
-    return header;
-}
+    // Write domain name
+    const domainParts = domainName.split('.');
+    let offset = 12;
+    domainParts.forEach((part) => {
+        packet.writeUInt8(part.length, offset++);
+        packet.write(part, offset, part.length, 'ascii');
+        offset += part.length;
+    });
 
-// Create the DNS question section
-function createQuestion(domainName, qtype, qclass) {
-    const domainParts = domainName.split(".");
-    const domainLength = domainParts.length;
+    // Set end of domain name
+    packet.writeUInt8(0, offset++);
 
-    const question = new Uint8Array(domainLength + 5);
+    // Set question type to A (IPv4 address)
+    packet.writeUInt16BE(1, offset);
+    offset += 2;
 
-    let offset = 0;
-    for (let i = 0; i < domainLength; i++) {
-        const part = domainParts[i];
-        const partLength = part.length;
-
-        question[offset] = partLength; // Set the length of the domain part
-        offset++;
-
-        for (let j = 0; j < partLength; j++) {
-            const charCode = part.charCodeAt(j);
-            question[offset] = charCode; // Set the ASCII code of each character
-            offset++;
-        }
-    }
-
-    // Set null byte to terminate the domain name
-    question[offset] = 0;
-
-    // Set QTYPE and QCLASS
-    question[offset + 1] = (qtype >> 8) & 0xff; // First 8 bits
-    question[offset + 2] = qtype & 0xff; // Last 8 bits
-    question[offset + 3] = (qclass >> 8) & 0xff; // First 8 bits
-    question[offset + 4] = qclass & 0xff; // Last 8 bits
-
-    return question;
-}
-
-// Helper function to create DNS query packet
-function createDNSQueryPacket(transactionId, flags, questions, domainName) {
-
-    const questionCount = 1; // Single question in the query
-
-    // Step 2: DNS Question Section
-    const qtype = 1; // A record query for IP address
-    const qclass = 1; // IN class for internet
-
-    // Step 3: Packet Formation
-    const header = createHeader(transactionId, flags, questionCount);
-    const question = createQuestion(domainName, qtype, qclass);
-
-    // Combine header and question into a byte array
-    const packet = new Uint8Array(header.length + question.length);
-    packet.set(header);
-    packet.set(question, header.length);
-
-    // Step 4: Packet Serialization
-    // const serializedPacket = Array.from(packet);
-
-    // return serializedPacket
-
-    console.log('packet query', packet);
+    // Set question class to IN (Internet)
+    packet.writeUInt16BE(1, offset);
 
     return packet;
-
-
 }
 
 // Helper function to parse DNS response
@@ -197,7 +125,7 @@ function readName(response, position) {
     let currentPosition = position;
     let jumped = false;
 
-    const length = response[currentPosition];
+    let length = response[currentPosition];
 
     while (length !== 0) {
         if ((length & 0xc0) === 0xc0) {
@@ -225,5 +153,33 @@ function readName(response, position) {
     };
 }
 
+// Function to send DNS query and parse the response
+function sendDNSQuery(domainName) {
+    return new Promise((resolve, reject) => {
+        const client = dgram.createSocket('udp4');
 
+        const transactionId = Math.floor(Math.random() * 65536);
+        const flags = 0x0100;
+        const questions = 1;
+
+        const packet = createDNSQueryPacket(transactionId, flags, questions, domainName);
+
+        client.send(packet, 0, packet.length, dnsPort, dnsServer, (error) => {
+            if (error) {
+                reject(error);
+            }
+        });
+
+        client.on('message', (response) => {
+            const parsedResponse = parseDNSResponse(response);
+            resolve(parsedResponse);
+            client.close();
+        });
+
+        client.on('error', (error) => {
+            reject(error);
+            client.close();
+        });
+    });
+}
 
