@@ -16,15 +16,40 @@ const readline = require('readline').createInterface({
 
 readline.question(`What's the address we want to query? \t`, address => {
     console.log(`Hi ${address}!`);
-    sendDNSQuery(address)
-        .then((parsedResponse) => {
-            console.log('Parsed DNS response:', parsedResponse);
-        })
-        .catch((error) => {
-            console.error('DNS query failed:', error);
-        });
-
     readline.close();
+
+    const client = dgram.createSocket('udp4');
+
+    // Create DNS query packet
+    const transactionId = Math.floor(Math.random() * 65536);
+    const flags = 0x0100;
+    const questions = 1;
+
+    const packet = createDNSQueryPacket(transactionId, flags, questions, address);
+
+    const dnsServer = '8.8.8.8'; // DNS server IP address
+    const dnsPort = 53; // DNS server port
+
+    client.send(packet, 0, packet.length, dnsPort, dnsServer, (error, response) => {
+        console.error('DNS query failed:', error);
+        console.error('DNS query response:', response);
+    });
+
+    client.on('message', (response) => {
+        const parsedResponse = parseDNSResponse(response);
+        console.log('in function: parsed DNS Response', parsedResponse);
+        client.close();
+    });
+
+    client.on('error', (error) => {
+        console.error('DNS query failed:', error);
+
+        client.close();
+    });
+
+
+
+
 });
 
 
@@ -109,9 +134,11 @@ function createDNSQueryPacket(transactionId, flags, questions, domainName) {
 
     // return serializedPacket
 
+    console.log('packet query', packet);
+
     return packet;
 
-    
+
 }
 
 // Helper function to parse DNS response
@@ -195,48 +222,6 @@ function readName(response, position) {
         nextPosition: currentPosition
     };
 }
-
-
-
-
-// Function to send DNS query and parse the response
-function sendDNSQuery(domainName) {
-    return new Promise((resolve, reject) => {
-        const client = dgram.createSocket('udp4');
-
-        // Create DNS query packet
-        const transactionId = Math.floor(Math.random() * 65536);
-        const flags = 0x0100;
-        const questions = 1;
-
-        const packet = createDNSQueryPacket(transactionId, flags, questions, domainName);
-
-        const dnsServer = '8.8.8.8'; // DNS server IP address
-        const dnsPort = 53; // DNS server port
-
-        client.send(packet, 0, packet.length, dnsPort, dnsServer, (error) => {
-            if (error) {
-                reject(error);
-            }
-        });
-
-        client.on('message', (response) => {
-            const parsedResponse = parseDNSResponse(response);
-            console.log('in function: parsed Response', parseDNSResponse);
-            resolve(parsedResponse);
-            client.close();
-        });
-
-        client.on('error', (error) => {
-            reject(error);
-            client.close();
-        });
-    });
-}
-
-
-
-
 
 
 
