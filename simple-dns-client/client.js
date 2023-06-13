@@ -33,11 +33,13 @@ readline.question(`What's the address we want to query? \t`, address => {
     client.send(packet, 0, packet.length, dnsPort, dnsServer, (error, response) => {
         console.error('DNS query failed:', error);
         console.error('DNS query response:', response);
+
+        const parsedResponse = parseDNSResponse(response);
+        console.log('in function: parsed DNS Response', parsedResponse);
     });
 
     client.on('message', (response) => {
-        const parsedResponse = parseDNSResponse(response);
-        console.log('in function: parsed DNS Response', parsedResponse);
+        
         client.close();
     });
 
