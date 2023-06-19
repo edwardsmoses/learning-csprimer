@@ -71,59 +71,133 @@ function createDNSQueryPacket(transactionId, flags, questions, domainName) {
 }
 
 // Helper function to parse DNS response
-function parseDNSResponse(response) {
-    const transactionId = response.readUInt16BE(0); // Get transaction ID from response
-    const flags = response.readUInt16BE(2); // Get flags from response
+// Helper function to parse DNS response
+// DNS response parsing function
+function parseDNSResponse(dnsResponse) {
 
-    const answersCount = response.readUInt16BE(6); // Get number of answers in the response
-
-    const parsedResponse = {
-        transactionId,
-        flags,
-        answers: [],
-        aRecords: [],
+    console.log('getting the response?', dnsResponse);
+    const response = {};
+  
+    // Parse the header section
+    const header = dnsResponse.slice(0, 12);
+    response.id = header.readUInt16BE(0);
+    response.flags = {
+      qr: (header.readUInt16BE(2) & 0x8000) !== 0,
+      opcode: (header.readUInt16BE(2) & 0x7800) >> 11,
+      aa: (header.readUInt16BE(2) & 0x0400) !== 0,
+      tc: (header.readUInt16BE(2) & 0x0200) !== 0,
+      rd: (header.readUInt16BE(2) & 0x0100) !== 0,
+      ra: (header.readUInt16BE(2) & 0x0080) !== 0,
+      z: (header.readUInt16BE(2) & 0x0040) !== 0,
+      rcode: (header.readUInt16BE(2) & 0x000F),
     };
+    response.qdcount = header.readUInt16BE(4);
+    response.ancount = header.readUInt16BE(6);
+    response.nscount = header.readUInt16BE(8);
+    response.arcount = header.readUInt16BE(10);
 
-    let currentPosition = 12; // Start position for answers in the response
+    console.log('parsing the response? +1', response);
 
-    // Parse each answer
-    for (let i = 0; i < answersCount; i++) {
-        const answer = {};
+  
+    // Parse the question section
+    let offset = 12;
+    response.questions = [];
+    for (let i = 0; i < response.qdcount; i++) {
+      const question = {};
+    console.log('parsing the name yet no? +2', response);
+      
+      question.qname = readName(dnsResponse, offset);
 
-        // Read the name from the response
-        const name = readName(response, currentPosition);
-        answer.name = name.name;
-        currentPosition = name.nextPosition;
-
-        // Read the type and class from the response
-        answer.type = response.readUInt16BE(currentPosition);
-        answer.class = response.readUInt16BE(currentPosition + 2);
-        currentPosition += 4;
-
-        // Read the TTL (Time to Live) from the response
-        answer.ttl = response.readUInt32BE(currentPosition);
-        currentPosition += 4;
-
-        // Read the data length from the response
-        const dataLength = response.readUInt16BE(currentPosition);
-        currentPosition += 2;
-
-        // Read the data (IP address in this case) from the response
-        answer.data = `${response[currentPosition]}.${response[currentPosition + 1]}.${response[currentPosition + 2]}.${response[currentPosition + 3]}`;
-        console.log('what is you', answer, response, response[currentPosition + 4], response[currentPosition + 5]);
-        parsedResponse.aRecords.push(answer.data);
+    console.log('parsing the name? +2', response);
 
 
-        currentPosition += dataLength;
-
-        parsedResponse.answers.push(answer);
+      offset += question.qname.length + 2;
+      question.qtype = dnsResponse.readUInt16BE(offset);
+      question.qclass = dnsResponse.readUInt16BE(offset + 2);
+      offset += 4;
+      response.questions.push(question);
     }
 
+    console.log('parsing the response? +2', response);
 
+  
+    // Parse the answer section
+    response.answers = [];
+    for (let i = 0; i < response.ancount; i++) {
+      const answer = {};
+      answer.name = readDomainName(dnsResponse, offset);
+      offset += answer.name.length + 2;
+      answer.type = dnsResponse.readUInt16BE(offset);
+      answer.class = dnsResponse.readUInt16BE(offset + 2);
+      answer.ttl = dnsResponse.readUInt32BE(offset + 4);
+      answer.rdlength = dnsResponse.readUInt16BE(offset + 8);
+      offset += 10;
+      answer.rdata = dnsResponse.slice(offset, offset + answer.rdlength);
+      offset += answer.rdlength;
+      response.answers.push(answer);
+    }
 
-    return parsedResponse;
-}
+    console.log('parsing the response? +3', response);
 
+  
+    // Parse the authority section
+    response.authorities = [];
+    for (let i = 0; i < response.nscount; i++) {
+      const authority = {};
+      authority.name = readDomainName(dnsResponse, offset);
+      offset += authority.name.length + 2;
+      authority.type = dnsResponse.readUInt16BE(offset);
+      authority.class = dnsResponse.readUInt16BE(offset + 2);
+      authority.ttl = dnsResponse.readUInt32BE(offset + 4);
+      authority.rdlength = dnsResponse.readUInt16BE(offset + 8);
+      offset += 10;
+      authority.rdata = dnsResponse.slice(offset, offset + authority.rdlength);
+      offset += authority.rdlength;
+      response.authorities.push(authority);
+    }
+  
+    // Parse the additional section
+    response.additionals = [];
+    for (let i = 0; i < response.arcount; i++) {
+      const additional = {};
+      additional.name = readDomainName(dnsResponse, offset);
+      offset += additional.name.length + 2;
+      additional.type = dnsResponse.readUInt16BE(offset);
+      additional.class = dnsResponse.readUInt16BE(offset + 2);
+      additional.ttl = dnsResponse.readUInt32BE(offset + 4);
+      additional.rdlength = dnsResponse.readUInt16BE(offset + 8);
+      offset += 10;
+      additional.rdata = dnsResponse.slice(offset, offset + additional.rdlength);
+      offset += additional.rdlength;
+      response.additionals.push(additional);
+    }
+  
+    return response;
+  }
+  
+  // Helper function to read domain names
+  function readDomainName(buffer, offset) {
+    let name = '';
+    let length = buffer[offset];
+    let position = offset + 1;
+  
+    while (length !== 0) {
+      if ((length & 0xC0) === 0xC0) {
+        const pointer = ((length & 0x3F) << 8) | buffer[position];
+        name += readDomainName(buffer, pointer);
+        position++;
+        break;
+      }
+  
+      name += buffer.toString('utf8', position, position + length) + '.';
+      position += length;
+      length = buffer[position];
+    }
+  
+    return name;
+  }
+  
+  
 // Helper function to read domain name from the DNS response
 function readName(response, position) {
     let name = '';
