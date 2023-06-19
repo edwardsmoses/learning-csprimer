@@ -62,9 +62,6 @@ function createDNSQueryPacket(transactionId, flags, questions, domainName) {
     return packet;
 }
 
-// Helper function to parse DNS response
-// Helper function to parse DNS response
-// DNS response parsing function
 function parseDNSResponse(dnsResponse) {
 
     const recordData = dnsResponse.slice(12); // Skip the DNS header
@@ -80,7 +77,6 @@ function parseDNSResponse(dnsResponse) {
     const answerType = recordData.readUInt16BE(offset);
     const answerClass = recordData.readUInt16BE(offset + 2);
     const ttl = recordData.readUInt32BE(offset + 4);
-    const dataLength = recordData.readUInt16BE(offset + 10);
     const ipAddress = recordData.slice(offset + 12, offset + 16).join('.');
 
     // Return the parsed A record information
@@ -90,7 +86,6 @@ function parseDNSResponse(dnsResponse) {
         ttl,
         ipAddress
     };
-
 }
 
 
