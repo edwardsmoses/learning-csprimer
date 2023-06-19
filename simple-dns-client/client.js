@@ -77,86 +77,30 @@ function parseDNSResponse(dnsResponse) {
 
     const recordData = dnsResponse.slice(12); // Skip the DNS header
     let offset = 0;
-  
+
     // Skip the question section
     while (recordData[offset] !== 0) {
-      offset += 1 + recordData[offset];
+        offset += 1 + recordData[offset];
     }
     offset += 5; // Skip the question section's type and class fields
-  
+
     // Parse the answer section
     const answerType = recordData.readUInt16BE(offset);
     const answerClass = recordData.readUInt16BE(offset + 2);
     const ttl = recordData.readUInt32BE(offset + 4);
     const dataLength = recordData.readUInt16BE(offset + 10);
     const ipAddress = recordData.slice(offset + 12, offset + 16).join('.');
-  
+
     // Return the parsed A record information
     return {
-      type: answerType,
-      class: answerClass,
-      ttl,
-      ipAddress
+        type: answerType,
+        class: answerClass,
+        ttl,
+        ipAddress
     };
 
-  }
-  
-  // Helper function to read domain names
-  function readDomainName(buffer, offset) {
-    let name = '';
-    let length = buffer[offset];
-    let position = offset + 1;
-  
-    while (length !== 0) {
-      if ((length & 0xC0) === 0xC0) {
-        const pointer = ((length & 0x3F) << 8) | buffer[position];
-        name += readDomainName(buffer, pointer);
-        position++;
-        break;
-      }
-  
-      name += buffer.toString('utf8', position, position + length) + '.';
-      position += length;
-      length = buffer[position];
-    }
-  
-    return name;
-  }
-  
-  
-// Helper function to read domain name from the DNS response
-function readName(response, position) {
-    let name = '';
-    let currentPosition = position;
-    let jumped = false;
-
-    let length = response[currentPosition];
-
-    while (length !== 0) {
-        if ((length & 0xc0) === 0xc0) {
-            const offset = ((length & 0x3f) << 8) + response[currentPosition + 1];
-            if (!jumped) {
-                position += 2;
-                jumped = true;
-            }
-            currentPosition = offset;
-        } else {
-            name += response.toString('ascii', currentPosition + 1, currentPosition + 1 + length) + '.';
-            currentPosition += length + 1;
-        }
-
-        length = response[currentPosition];
-    }
-
-    if (!jumped) {
-        currentPosition++;
-    }
-
-    return {
-        name: name.toLowerCase(),
-        nextPosition: currentPosition
-    };
 }
+
 
 // Function to send DNS query and parse the response
 function sendDNSQuery(domainName) {
