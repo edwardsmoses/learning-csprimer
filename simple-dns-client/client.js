@@ -75,104 +75,30 @@ function createDNSQueryPacket(transactionId, flags, questions, domainName) {
 // DNS response parsing function
 function parseDNSResponse(dnsResponse) {
 
-    console.log('getting the response?', dnsResponse);
-    const response = {};
+    const recordData = dnsResponse.slice(12); // Skip the DNS header
+    let offset = 0;
   
-    // Parse the header section
-    const header = dnsResponse.slice(0, 12);
-    response.id = header.readUInt16BE(0);
-    response.flags = {
-      qr: (header.readUInt16BE(2) & 0x8000) !== 0,
-      opcode: (header.readUInt16BE(2) & 0x7800) >> 11,
-      aa: (header.readUInt16BE(2) & 0x0400) !== 0,
-      tc: (header.readUInt16BE(2) & 0x0200) !== 0,
-      rd: (header.readUInt16BE(2) & 0x0100) !== 0,
-      ra: (header.readUInt16BE(2) & 0x0080) !== 0,
-      z: (header.readUInt16BE(2) & 0x0040) !== 0,
-      rcode: (header.readUInt16BE(2) & 0x000F),
-    };
-    response.qdcount = header.readUInt16BE(4);
-    response.ancount = header.readUInt16BE(6);
-    response.nscount = header.readUInt16BE(8);
-    response.arcount = header.readUInt16BE(10);
-
-    console.log('parsing the response? +1', response);
-
-  
-    // Parse the question section
-    let offset = 12;
-    response.questions = [];
-    for (let i = 0; i < response.qdcount; i++) {
-      const question = {};
-    console.log('parsing the name yet no? +2', response);
-      
-      question.qname = readName(dnsResponse, offset);
-
-    console.log('parsing the name? +2', response);
-
-
-      offset += question.qname.length + 2;
-      question.qtype = dnsResponse.readUInt16BE(offset);
-      question.qclass = dnsResponse.readUInt16BE(offset + 2);
-      offset += 4;
-      response.questions.push(question);
+    // Skip the question section
+    while (recordData[offset] !== 0) {
+      offset += 1 + recordData[offset];
     }
-
-    console.log('parsing the response? +2', response);
-
+    offset += 5; // Skip the question section's type and class fields
   
     // Parse the answer section
-    response.answers = [];
-    for (let i = 0; i < response.ancount; i++) {
-      const answer = {};
-      answer.name = readDomainName(dnsResponse, offset);
-      offset += answer.name.length + 2;
-      answer.type = dnsResponse.readUInt16BE(offset);
-      answer.class = dnsResponse.readUInt16BE(offset + 2);
-      answer.ttl = dnsResponse.readUInt32BE(offset + 4);
-      answer.rdlength = dnsResponse.readUInt16BE(offset + 8);
-      offset += 10;
-      answer.rdata = dnsResponse.slice(offset, offset + answer.rdlength);
-      offset += answer.rdlength;
-      response.answers.push(answer);
-    }
+    const answerType = recordData.readUInt16BE(offset);
+    const answerClass = recordData.readUInt16BE(offset + 2);
+    const ttl = recordData.readUInt32BE(offset + 4);
+    const dataLength = recordData.readUInt16BE(offset + 10);
+    const ipAddress = recordData.slice(offset + 12, offset + 16).join('.');
+  
+    // Return the parsed A record information
+    return {
+      type: answerType,
+      class: answerClass,
+      ttl,
+      ipAddress
+    };
 
-    console.log('parsing the response? +3', response);
-
-  
-    // Parse the authority section
-    response.authorities = [];
-    for (let i = 0; i < response.nscount; i++) {
-      const authority = {};
-      authority.name = readDomainName(dnsResponse, offset);
-      offset += authority.name.length + 2;
-      authority.type = dnsResponse.readUInt16BE(offset);
-      authority.class = dnsResponse.readUInt16BE(offset + 2);
-      authority.ttl = dnsResponse.readUInt32BE(offset + 4);
-      authority.rdlength = dnsResponse.readUInt16BE(offset + 8);
-      offset += 10;
-      authority.rdata = dnsResponse.slice(offset, offset + authority.rdlength);
-      offset += authority.rdlength;
-      response.authorities.push(authority);
-    }
-  
-    // Parse the additional section
-    response.additionals = [];
-    for (let i = 0; i < response.arcount; i++) {
-      const additional = {};
-      additional.name = readDomainName(dnsResponse, offset);
-      offset += additional.name.length + 2;
-      additional.type = dnsResponse.readUInt16BE(offset);
-      additional.class = dnsResponse.readUInt16BE(offset + 2);
-      additional.ttl = dnsResponse.readUInt32BE(offset + 4);
-      additional.rdlength = dnsResponse.readUInt16BE(offset + 8);
-      offset += 10;
-      additional.rdata = dnsResponse.slice(offset, offset + additional.rdlength);
-      offset += additional.rdlength;
-      response.additionals.push(additional);
-    }
-  
-    return response;
   }
   
   // Helper function to read domain names
