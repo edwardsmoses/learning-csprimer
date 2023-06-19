@@ -109,8 +109,8 @@ function parseDNSResponse(response) {
         currentPosition += 2;
 
         // Read the data (IP address in this case) from the response
-        console.log('what is you', answer);
         answer.data = `${response[currentPosition]}.${response[currentPosition + 1]}.${response[currentPosition + 2]}.${response[currentPosition + 3]}`;
+        console.log('what is you', answer, response, response[currentPosition + 4], response[currentPosition + 5]);
         parsedResponse.aRecords.push(answer.data);
 
 
@@ -168,6 +168,7 @@ function sendDNSQuery(domainName) {
         const questions = 1;
 
         const packet = createDNSQueryPacket(transactionId, flags, questions, domainName);
+        console.log('what is the packet', packet);
 
         client.send(packet, 0, packet.length, dnsPort, dnsServer, (error) => {
             if (error) {
