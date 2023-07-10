@@ -1,4 +1,4 @@
-const net = require('node:net');
+const net = require('net');
 
 //original port
 const serverPort = 9000;
