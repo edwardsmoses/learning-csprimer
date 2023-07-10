@@ -8,9 +8,31 @@ net.createServer(function (conn) {
         console.log('ECHO_SERVER: CONN: started');
     });
 
+    //connect to the proxy host,
+    //ommiting server, the 'net' connect library assumes localhost when only the port is present
+    const proxySocket = net.connect(serverPort, () => {
+        // Log the connection details
+        console.log('Client connected:', conn.remoteAddress, conn.remotePort);
+        console.log('Proxying to:', serverPort);
+
+        // Forward data from the client to the proxy host
+        conn.pipe(proxySocket);
+
+        // Forward data from the proxy host to the client
+        proxySocket.pipe(conn);
+    });
+
+    // Log any errors with the proxy connection
+    proxySocket.on('error', (error) => {
+        console.error('Proxy socket error:', error);
+        conn.end();
+    });
+
+
     // Handle data received from the client
     conn.on('data', (data) => {
-
+        
+        // Parse the client request
         const request = parseRequest(data.toString());
 
         // Log the request details
@@ -18,30 +40,8 @@ net.createServer(function (conn) {
         console.log('Request URL:', request.url);
         console.log('Request Headers:', request.headers);
 
-
-        const proxySocket = net.connect(serverPort, () => {
-            console.log('Client connected:', conn.remoteAddress, conn.remotePort);
-            console.log('Proxying to:', serverPort);
-
-            // Forward data from the client to the proxy host
-            conn.pipe(proxySocket);
-
-            // Forward data from the proxy host to the client
-            proxySocket.pipe(conn);
-
-            conn.end;
-
-        });
-
-
-        // Log any errors with the proxy connection
-        proxySocket.on('error', (error) => {
-            console.error('Proxy socket error:', error);
-            clientSocket.end();
-        });
-
-
-
+        // Forward the modified request to the proxy host
+        proxySocket.write(data);
     });
 
     // Log when the client socket is closed
@@ -55,6 +55,7 @@ net.createServer(function (conn) {
         proxySocket.end();
     });
 
+
 }).listen(9999, function () {
     console.log('ECHO_SERVER STARTED');
 });
@@ -63,7 +64,7 @@ net.createServer(function (conn) {
 // Helper function to parse an HTTP request
 function parseRequest(requestString) {
     const lines = requestString.split('\r\n');
-
+    
     const [method, url, version] = lines[0].split(' ');
 
     const headers = {};
