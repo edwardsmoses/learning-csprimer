@@ -31,6 +31,15 @@ net.createServer(function (conn) {
 
     // Handle data received from the client
     conn.on('data', (data) => {
+
+        //return a valid HTTP response with a JSON content-type and body
+        conn.write(
+            'HTTP/1.0 200 OK\r\n' +
+            'Content-Type: application/json\r\n' +
+            '\r\n'
+        );
+
+
         // Parse the client request
         const request = parseRequest(data.toString());
 
@@ -41,6 +50,15 @@ net.createServer(function (conn) {
 
         // Forward the modified request to the proxy host
         proxySocket.write(data);
+
+          //return the headers.. as json 
+          conn.write(
+            `me \r\n` +
+            '\r\n'
+        );
+
+        //end the connection
+        conn.end();
     });
 
     // Log when the client socket is closed
@@ -63,8 +81,6 @@ net.createServer(function (conn) {
 // Helper function to parse an HTTP request
 function parseRequest(requestString) {
     const lines = requestString.split('\r\n');
-    
-    console.log('lines', lines);
 
     const [method, url, version] = lines[0].split(' ');
 
