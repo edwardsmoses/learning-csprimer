@@ -18,7 +18,7 @@ func start() {
 
 func overflow(depth int, address *int) {
 
-	fmt.Println("depth:", depth, (*int)(unsafe.Pointer(address))-(*int)(unsafe.Pointer(&depth)))
+	fmt.Println("depth:", depth, address, unsafe.Pointer(&depth))
 
 	overflow(depth+1, address)
 }
