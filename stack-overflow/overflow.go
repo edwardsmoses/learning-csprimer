@@ -18,7 +18,9 @@ func start() {
 
 func overflow(depth int, address *int) {
 
-	fmt.Println("depth:", depth, address, unsafe.Pointer(&depth))
+	if depth%10000 == 0 {
+		fmt.Println("frame depth:", depth, address, unsafe.Pointer(&depth))
+	}
 
 	overflow(depth+1, address)
 }
