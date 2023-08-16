@@ -9,6 +9,7 @@ import (
 var (
 	file, err              = os.Create("one_byte_by_byte")
 	file_current_size      int64
+	file_current_blocks    int64
 	how_many_bytes_written int64
 )
 
@@ -48,21 +49,16 @@ func writeByte() {
 
 func checkFileStat() {
 
-	stat, _err := os.Stat(file.Name())
+	prev_blocks := file_current_blocks
 
-	if _err != nil {
-		fmt.Println("Error: ", _err)
-		return
+	var stat syscall.Stat_t
+	syscall.Stat(file.Name(), &stat)
+
+	file_current_size = stat.Size
+	file_current_blocks = stat.Blocks
+
+	if file_current_blocks > prev_blocks {
+		fmt.Println("File ", file.Name(), "has current size", stat.Size, " and has blocks: ", file_current_blocks, " and on disk: ", file_current_blocks*512)
 	}
 
-	prev_size := file_current_size
-	file_current_size = stat.Size()
-	if file_current_size > prev_size {
-		fmt.Println("File ", stat.Name(), "has increased to", file_current_size, "from ", prev_size, "after writing ", how_many_bytes_written, " bytes")
-
-		var stat syscall.Stat_t
-		syscall.Stat(file.Name(), &stat)
-
-		fmt.Println("File size in bytes: ", stat.Blocks, stat.Size, stat.Blksize)
-	}
 }
