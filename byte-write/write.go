@@ -6,13 +6,18 @@ import (
 )
 
 var (
-	file, err = os.Create("one_byte_by_byte")
+	file, err         = os.Create("one_byte_by_byte")
+	file_current_size int64
 )
 
 func main() {
 	fmt.Println("Hello, Byte write!")
-	writeByte()
-	checkFileStat()
+	go writeByte()
+
+	//create infinite loop that checks when file size has increased
+	for {
+		checkFileStat()
+	}
 }
 
 func writeByte() {
@@ -22,17 +27,20 @@ func writeByte() {
 	}
 	defer file.Close()
 
-	byteToWrite := []byte{
-		0x53, //write S as a byte
-	}
-	_, err = file.Write(byteToWrite)
+	//create an array of 1mb bytes to write to file
+	byteToWrite := make([]byte, 1024*1024)
 
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
+	for i := 0; i < len(byteToWrite); i++ {
+		_, err = file.Write([]byte{
+			0x53, //write S as a byte
+		})
+
+		if err != nil {
+			fmt.Println("Error: ", err)
+			return
+		}
 	}
 
-	fmt.Println("Wrote 1 byte to file")
 }
 
 func checkFileStat() {
@@ -44,6 +52,9 @@ func checkFileStat() {
 		return
 	}
 
-	fmt.Println("File Name: ", stat.Name())
-	fmt.Println("Size: ", stat.Size())
+	prev_size := file_current_size
+	file_current_size = stat.Size()
+	if file_current_size > prev_size {
+		fmt.Println("File ", stat.Name(), "has increased to", file_current_size, "from ", prev_size)
+	}
 }
