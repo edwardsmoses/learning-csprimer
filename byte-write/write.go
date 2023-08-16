@@ -29,10 +29,8 @@ func writeByte() {
 	}
 	defer file.Close()
 
-	//create an array of 1mb bytes to write to file
-	byteToWrite := make([]byte, 1024*1024)
-
-	for i := 0; i < len(byteToWrite); i++ {
+	ONE_MEGABYTE := 1 << 20
+	for i := 0; i < ONE_MEGABYTE; i++ {
 		_, err = file.Write([]byte{
 			0x53, //write S as a byte
 		})
