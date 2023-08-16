@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"syscall"
 )
 
 var (
@@ -58,5 +59,10 @@ func checkFileStat() {
 	file_current_size = stat.Size()
 	if file_current_size > prev_size {
 		fmt.Println("File ", stat.Name(), "has increased to", file_current_size, "from ", prev_size, "after writing ", how_many_bytes_written, " bytes")
+
+		var stat syscall.Stat_t
+		syscall.Stat(file.Name(), &stat)
+
+		fmt.Println("File size in bytes: ", stat.Blocks, stat.Size, stat.Blksize)
 	}
 }
