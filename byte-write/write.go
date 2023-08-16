@@ -12,6 +12,7 @@ var (
 func main() {
 	fmt.Println("Hello, Byte write!")
 	writeByte()
+	checkFileStat()
 }
 
 func writeByte() {
@@ -36,4 +37,13 @@ func writeByte() {
 
 func checkFileStat() {
 
+	stat, _err := os.Stat(file.Name())
+
+	if _err != nil {
+		fmt.Println("Error: ", _err)
+		return
+	}
+
+	fmt.Println("File Name: ", stat.Name())
+	fmt.Println("Size: ", stat.Size())
 }
