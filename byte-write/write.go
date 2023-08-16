@@ -5,13 +5,16 @@ import (
 	"os"
 )
 
+var (
+	file, err = os.Create("one_byte_by_byte")
+)
+
 func main() {
 	fmt.Println("Hello, Byte write!")
 	writeByte()
 }
 
 func writeByte() {
-	file, err := os.Create("one_byte_by_byte")
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
@@ -29,4 +32,8 @@ func writeByte() {
 	}
 
 	fmt.Println("Wrote 1 byte to file")
+}
+
+func checkFileStat() {
+
 }
