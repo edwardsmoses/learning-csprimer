@@ -6,12 +6,14 @@ import (
 )
 
 var (
-	file, err         = os.Create("one_byte_by_byte")
-	file_current_size int64
+	file, err              = os.Create("one_byte_by_byte")
+	file_current_size      int64
+	how_many_bytes_written int64
 )
 
 func main() {
 	fmt.Println("Hello, Byte write!")
+
 	go writeByte()
 
 	//create infinite loop that checks when file size has increased
@@ -39,6 +41,8 @@ func writeByte() {
 			fmt.Println("Error: ", err)
 			return
 		}
+
+		how_many_bytes_written += 1
 	}
 
 }
@@ -55,6 +59,6 @@ func checkFileStat() {
 	prev_size := file_current_size
 	file_current_size = stat.Size()
 	if file_current_size > prev_size {
-		fmt.Println("File ", stat.Name(), "has increased to", file_current_size, "from ", prev_size)
+		fmt.Println("File ", stat.Name(), "has increased to", file_current_size, "from ", prev_size, "after writing ", how_many_bytes_written, " bytes")
 	}
 }
