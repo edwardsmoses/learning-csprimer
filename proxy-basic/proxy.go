@@ -18,39 +18,44 @@ func main() {
 }
 
 func startProxyServer() {
+
+	//start listening to incoming requests
 	listener, err := net.Listen("tcp", CLIENT_PORT)
 	if err != nil {
 		fmt.Println("Error listening:", err)
 		return
 	}
 
-	defer listener.Close()
+	defer listener.Close() //we want to close the requests at end..
 
 	fmt.Println("Listening on " + CLIENT_PORT)
 
+	//initiate listener to accept incoming requests on a loop
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err)
 			continue
 		}
-		go handleConnection(conn)
+		go handleConnection(conn) //handle the connection in a separate goroutine
 	}
 }
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
+	//connect to the actual server on the SERVER_PORT
 	proxySocket, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
 	if err != nil {
 		fmt.Println("Error connecting to proxy:", err)
 		return
 	}
-	defer proxySocket.Close()
+	defer proxySocket.Close() //close both the client and server connections at the end
 
 	fmt.Println("Client connected:", conn.RemoteAddr())
 	fmt.Println("Proxying to:", SERVER_PORT)
 
+	//goroutine to copy data from client (proxy) to server
 	go func() {
 		_, err := io.Copy(proxySocket, conn)
 		if err != nil {
@@ -58,6 +63,7 @@ func handleConnection(conn net.Conn) {
 		}
 	}()
 
+	//go routine to copy data from Server to client (proxy)
 	go func() {
 		_, err := io.Copy(conn, proxySocket)
 		if err != nil {
@@ -65,6 +71,7 @@ func handleConnection(conn net.Conn) {
 		}
 	}()
 
+	//reading the data from client
 	reader := bufio.NewReader(conn)
 	for {
 		data, err := reader.ReadString('\n')
@@ -76,6 +83,7 @@ func handleConnection(conn net.Conn) {
 		//logging the request
 		fmt.Println("Request String:", data)
 
+		//forward the received data from the Proxy Server to the Proxy Client
 		_, err = proxySocket.Write([]byte(data))
 		if err != nil {
 			fmt.Println("Error forwarding modified request to proxy:", err)
