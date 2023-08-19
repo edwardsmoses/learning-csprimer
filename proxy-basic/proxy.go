@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 )
@@ -52,14 +53,14 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Proxying to:", SERVER_PORT)
 
 	go func() {
-		_, err := conn.WriteTo(proxySocket)
+		_, err := io.Copy(proxySocket, conn)
 		if err != nil {
 			fmt.Println("Error forwarding data to proxy:", err)
 		}
 	}()
 
 	go func() {
-		_, err := proxySocket.WriteTo(conn)
+		_, err := io.Copy(conn, proxySocket)
 		if err != nil {
 			fmt.Println("Error forwarding data to client:", err)
 		}
