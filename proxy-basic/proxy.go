@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
 )
 
 var (
@@ -74,45 +73,13 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		request := parseRequest(data)
-		fmt.Println("Request Method:", request.method)
-		fmt.Println("Request URL:", request.url)
-		fmt.Println("Request Headers:", request.headers)
+		//logging the request
+		fmt.Println("Request String:", data)
 
 		_, err = proxySocket.Write([]byte(data))
 		if err != nil {
 			fmt.Println("Error forwarding modified request to proxy:", err)
 			return
 		}
-	}
-}
-
-type httpRequest struct {
-	method  string
-	url     string
-	version string
-	headers map[string]string
-}
-
-func parseRequest(requestString string) httpRequest {
-	lines := strings.Split(requestString, "\r\n")
-
-	parts := strings.Split(lines[0], " ")
-	method, url, version := parts[0], parts[1], parts[2]
-
-	headers := make(map[string]string)
-	for i := 1; i < len(lines); i++ {
-		if lines[i] == "" {
-			break
-		}
-		parts := strings.SplitN(lines[i], ": ", 2)
-		headers[strings.ToLower(parts[0])] = parts[1]
-	}
-
-	return httpRequest{
-		method:  method,
-		url:     url,
-		version: version,
-		headers: headers,
 	}
 }
