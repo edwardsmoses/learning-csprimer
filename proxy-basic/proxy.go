@@ -1,5 +1,29 @@
 package main
 
+//PLAN to implement persistent connections with the proxy server:
+// Objective; Extend proxy to respect keep alive semantics
+// Non-objective: Maintain connection with the origin server
+
+// Keep alive semantics:
+// HTTP /1.0
+// Close unless Connection: Keep-Alive header is present
+
+// HTTP /1.1
+// Keep-Alive (connection remains open) unless Connection: Close header is present
+
+// HTTP /2.0 and /3.0 - not supported
+
+// Steps:
+// 1. Parse the HTTP request to determine the version of HTTP, and the Connection header
+// 2. Create a map of connections with the key as the client address and the value as the connection
+// 3. Check if the connection exists in the map
+// 4. If it does, then use the existing connection to forward the request
+// 5. If it does not, then create a new connection and add it to the map
+// 6. Close the connection when the client disconnects
+// 7. Remove the connection from the map when the client disconnects
+// 8. Use a mutex to lock the map when adding or removing connections
+// 9. Use a mutex to lock the map when reading or writing to the connection
+
 import (
 	"bufio"
 	"fmt"
