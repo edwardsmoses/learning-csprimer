@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 )
 
 var (
@@ -107,6 +108,9 @@ func handleConnection(conn net.Conn) {
 		//logging the request
 		fmt.Println("Request String:", data)
 
+		headerInfo := parseHTTPHeader(data)
+		fmt.Println("HTTP Info:", headerInfo)
+
 		//forward the received data from the Proxy Server to the Proxy Client
 		_, err = proxySocket.Write([]byte(data))
 		if err != nil {
@@ -114,4 +118,54 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 	}
+}
+
+type HTTPHeaderInfo struct {
+	connectionType string
+	httpVersion    string
+}
+
+func parseHTTPHeader(data string) HTTPHeaderInfo {
+	//parse the HTTP request to determine the version of HTTP, and the Connection header
+
+	info := HTTPHeaderInfo{
+		connectionType: "",
+		httpVersion:    "",
+	}
+
+	// Read the first line of the request
+	scanner := bufio.NewScanner(strings.NewReader(data))
+
+	// Parse the first line of the request to get the HTTP version
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "HTTP/") {
+			parts := strings.Split(line, " ")
+			if len(parts) > 0 {
+				info.httpVersion = parts[0]
+			}
+			// We have the HTTP version, so stop parsing
+		} else if strings.HasPrefix(strings.ToLower(line), "connection:") {
+			// Parse the Connection header to get the connection type
+			parts := strings.Split(line, ":")
+			if len(parts) > 1 {
+				info.connectionType = strings.TrimSpace(parts[1])
+			}
+		}
+	}
+
+	// Handle Keep-Alive semantics
+	switch info.httpVersion {
+	case "HTTP/1.0":
+		if info.connectionType != "Keep-Alive" {
+			info.connectionType = "Close"
+		}
+	case "HTTP/1.1":
+		if info.connectionType == "" {
+			info.connectionType = "Keep-Alive"
+		}
+	}
+
+	return info
+
 }
