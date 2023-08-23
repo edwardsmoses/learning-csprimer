@@ -14,7 +14,7 @@ package main
 // HTTP /2.0 and /3.0 - not supported
 
 // Steps:
-// 1. Parse the HTTP request to determine the version of HTTP, and the Connection header
+// 1. DONE: Parse the HTTP request to determine the version of HTTP, and the Connection header
 // 2. Create a map of connections with the key as the client address and the value as the connection
 // 3. Check if the connection exists in the map
 // 4. If it does, then use the existing connection to forward the request
@@ -105,11 +105,8 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		//logging the request
-		fmt.Println("Request String:", data)
-
 		headerInfo := parseHTTPHeader(data)
-		fmt.Println("HTTP Info:", headerInfo)
+		fmt.Printf("HTTP Info: %+v\n", headerInfo)
 
 		//forward the received data from the Proxy Server to the Proxy Client
 		_, err = proxySocket.Write([]byte(data))
@@ -127,30 +124,23 @@ type HTTPHeaderInfo struct {
 
 func parseHTTPHeader(data string) HTTPHeaderInfo {
 	//parse the HTTP request to determine the version of HTTP, and the Connection header
-
 	info := HTTPHeaderInfo{
 		connectionType: "",
 		httpVersion:    "",
 	}
 
-	// Read the first line of the request
-	scanner := bufio.NewScanner(strings.NewReader(data))
-
-	// Parse the first line of the request to get the HTTP version
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "HTTP/") {
-			parts := strings.Split(line, " ")
-			if len(parts) > 0 {
-				info.httpVersion = parts[0]
+	lines := strings.Split(data, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "HTTP/") {
+			parts := strings.Fields(line)
+			for _, part := range parts {
+				if strings.HasPrefix(part, "HTTP/") {
+					info.httpVersion = part
+					break
+				}
 			}
-			// We have the HTTP version, so stop parsing
 		} else if strings.HasPrefix(strings.ToLower(line), "connection:") {
-			// Parse the Connection header to get the connection type
-			parts := strings.Split(line, ":")
-			if len(parts) > 1 {
-				info.connectionType = strings.TrimSpace(parts[1])
-			}
+			info.connectionType = strings.TrimSpace(strings.Split(line, ":")[1])
 		}
 	}
 
