@@ -30,11 +30,14 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 )
 
 var (
-	SERVER_PORT = 9000
-	CLIENT_PORT = ":9999"
+	SERVER_PORT         = 9000
+	CLIENT_PORT         = ":9999"
+	existingConnections = make(map[string]net.Conn)
+	mutex               = &sync.Mutex{}
 )
 
 func main() {
@@ -69,18 +72,32 @@ func startProxyServer() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	//connect to the actual server on the SERVER_PORT
-	proxySocket, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
-	if err != nil {
-		fmt.Println("Error connecting to proxy:", err)
-		return
+	clientAddr := conn.RemoteAddr().String()
+
+	mutex.Lock()
+	proxySocket, exists := existingConnections[clientAddr]
+	if !exists {
+		var err error
+		proxySocket, err = net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
+		if err != nil {
+			fmt.Println("Error connecting to proxy:", err)
+			mutex.Unlock()
+			return
+		}
+		existingConnections[clientAddr] = proxySocket
 	}
-	defer proxySocket.Close() //close both the client and server connections at the end
+	mutex.Unlock()
 
-	fmt.Println("Client connected:", conn.RemoteAddr())
-	fmt.Println("Proxying to:", SERVER_PORT)
+	defer func() {
+		mutex.Lock()
+		proxySocket.Close()
+		delete(existingConnections, clientAddr)
+		mutex.Unlock()
+	}()
 
-	//goroutine to copy data from client (proxy) to server
+	fmt.Println("Client connected:", clientAddr)
+	fmt.Println("Proxy in-progress to:", SERVER_PORT)
+
 	go func() {
 		_, err := io.Copy(proxySocket, conn)
 		if err != nil {
@@ -88,7 +105,6 @@ func handleConnection(conn net.Conn) {
 		}
 	}()
 
-	//go routine to copy data from Server to client (proxy)
 	go func() {
 		_, err := io.Copy(conn, proxySocket)
 		if err != nil {
@@ -96,25 +112,24 @@ func handleConnection(conn net.Conn) {
 		}
 	}()
 
-	//reading the data from client
 	reader := bufio.NewReader(conn)
 	for {
 		data, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Client disconnected:", conn.RemoteAddr())
+			fmt.Println("Client disconnected:", clientAddr)
 			return
 		}
 
-		headerInfo := parseHTTPHeader(data)
+		headerInfo := parseHTTPHeader(data) // Assuming you have this function from previous examples
 		fmt.Printf("HTTP Info: %+v\n", headerInfo)
 
-		//forward the received data from the Proxy Server to the Proxy Client
 		_, err = proxySocket.Write([]byte(data))
 		if err != nil {
 			fmt.Println("Error forwarding modified request to proxy:", err)
 			return
 		}
 	}
+
 }
 
 type HTTPHeaderInfo struct {
