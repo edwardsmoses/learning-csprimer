@@ -36,6 +36,9 @@ import (
 var (
 	SERVER_PORT = 9000
 	CLIENT_PORT = ":9999"
+
+	existingConnections = make(map[string]net.Conn)
+	mutex               = &sync.Mutex{}
 )
 
 func main() {
