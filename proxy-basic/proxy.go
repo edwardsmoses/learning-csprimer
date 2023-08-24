@@ -48,7 +48,7 @@ func startProxyServer() {
 
 func handleConnection(conn net.Conn) {
 	clientAddr := conn.RemoteAddr().String()
-	fmt.Println("Client connected:", clientAddr)
+	fmt.Println("New connection from:", clientAddr)
 
 	for {
 		// Read the first line of the client's request to get the HTTP header info
@@ -105,6 +105,8 @@ func handleConnection(conn net.Conn) {
 			fmt.Println("Closing connection for client:", clientAddr)
 			return
 		}
+
+		fmt.Println("Finished handling connection from:", clientAddr)
 	}
 }
 
