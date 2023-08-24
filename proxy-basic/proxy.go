@@ -82,7 +82,7 @@ func handleConnection(conn net.Conn) {
 	defer destServerSocket.Close()
 
 	fmt.Println("Client connected:", conn.RemoteAddr())
-	fmt.Println("Proxying to:", SERVER_PORT)
+	fmt.Println("Proxy in-progress to:", SERVER_PORT)
 
 	// Read the first line of the client's request to get the HTTP header info
 	reader := bufio.NewReader(conn)
