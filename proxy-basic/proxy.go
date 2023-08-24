@@ -1,29 +1,5 @@
 package main
 
-//PLAN to implement persistent connections with the proxy server:
-// Objective; Extend proxy to respect keep alive semantics
-// Non-objective: Maintain connection with the origin server
-
-// Keep alive semantics:
-// HTTP /1.0
-// Close unless Connection: Keep-Alive header is present
-
-// HTTP /1.1
-// Keep-Alive (connection remains open) unless Connection: Close header is present
-
-// HTTP /2.0 and /3.0 - not supported
-
-// Steps:
-// 1. DONE: Parse the HTTP request to determine the version of HTTP, and the Connection header
-// 2. Create a map of connections with the key as the client address and the value as the connection
-// 3. Check if the connection exists in the map
-// 4. If it does, then use the existing connection to forward the request
-// 5. If it does not, then create a new connection and add it to the map
-// 6. Close the connection when the client disconnects
-// 7. Remove the connection from the map when the client disconnects
-// 8. Use a mutex to lock the map when adding or removing connections
-// 9. Use a mutex to lock the map when reading or writing to the connection
-
 import (
 	"bufio"
 	"fmt"
@@ -71,60 +47,65 @@ func startProxyServer() {
 }
 
 func handleConnection(conn net.Conn) {
-	defer conn.Close()
+	clientAddr := conn.RemoteAddr().String()
+	fmt.Println("Client connected:", clientAddr)
 
-	// Connect to the actual server
-	destServerSocket, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
-	if err != nil {
-		fmt.Println("Error connecting to proxy:", err)
-		return
-	}
-	defer destServerSocket.Close()
+	for {
+		// Read the first line of the client's request to get the HTTP header info
+		reader := bufio.NewReader(conn)
+		data, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error reading from client:", err)
+			return
+		}
 
-	fmt.Println("Client connected:", conn.RemoteAddr())
-	fmt.Println("Proxy in-progress to:", SERVER_PORT)
+		headerInfo := parseHTTPHeader(data)
+		fmt.Printf("HTTP Info: %+v\n", headerInfo)
 
-	// Read the first line of the client's request to get the HTTP header info
-	reader := bufio.NewReader(conn)
-	data, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Error reading from client:", err)
-		return
-	}
+		// Connect to the actual server
+		destServerSocket, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
+		if err != nil {
+			fmt.Println("Error connecting to proxy:", err)
+			return
+		}
 
-	headerInfo := parseHTTPHeader(data)
-	fmt.Printf("HTTP Info: %+v\n", headerInfo)
-
-	// Forward the first line of the client's request to the server
-	_, err = destServerSocket.Write([]byte(data))
-	if err != nil {
-		fmt.Println("Error forwarding data to proxy:", err)
-		return
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(2) // We have two goroutines
-
-	// Goroutine to copy data from client (proxy) to server
-	go func() {
-		defer wg.Done()
-		_, err := io.Copy(destServerSocket, reader)
+		// Forward the first line of the client's request to the server
+		_, err = destServerSocket.Write([]byte(data))
 		if err != nil {
 			fmt.Println("Error forwarding data to proxy:", err)
+			destServerSocket.Close()
+			return
 		}
-	}()
 
-	// Goroutine to copy data from Server to client (proxy)
-	go func() {
-		defer wg.Done()
-		_, err := io.Copy(conn, destServerSocket)
-		if err != nil {
-			fmt.Println("Error forwarding data to client:", err)
+		var wg sync.WaitGroup
+		wg.Add(2) // We have two goroutines
+
+		// Goroutine to copy data from client (proxy) to server
+		go func() {
+			defer wg.Done()
+			_, err := io.Copy(destServerSocket, reader)
+			if err != nil {
+				fmt.Println("Error forwarding data to proxy:", err)
+			}
+			destServerSocket.Close()
+		}()
+
+		// Goroutine to copy data from Server to client (proxy)
+		go func() {
+			defer wg.Done()
+			_, err := io.Copy(conn, destServerSocket)
+			if err != nil {
+				fmt.Println("Error forwarding data to client:", err)
+			}
+		}()
+
+		wg.Wait() // Wait for both goroutines to finish
+
+		if headerInfo.connectionType != "Keep-Alive" {
+			fmt.Println("Closing connection for client:", clientAddr)
+			return
 		}
-	}()
-
-	wg.Wait() // Wait for both goroutines to finish
-
+	}
 }
 
 type HTTPHeaderInfo struct {
