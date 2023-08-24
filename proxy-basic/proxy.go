@@ -65,7 +65,7 @@ func startProxyServer() {
 			fmt.Println("Error accepting: ", err)
 			continue
 		}
-		go handleConnection(conn) //handle the connection in a separate goroutine
+		handleConnection(conn) //handle the connection in a separate goroutine
 	}
 }
 
@@ -74,88 +74,52 @@ func handleConnection(conn net.Conn) {
 
 	clientAddr := conn.RemoteAddr().String()
 
-	var proxySocket net.Conn
-	var connectionExists bool
-	var err error
+	fmt.Println("Client connected:", clientAddr)
 
-	fmt.Println("Existing connections", existingConnections)
-
-	reader := bufio.NewReader(conn)
-	httpHeader, err := reader.ReadString('\n')
+	// Connect to the actual server
+	destServerSocket, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
 	if err != nil {
-		fmt.Println("Client disconnected:", clientAddr)
+		fmt.Println("Error connecting to proxy:", err)
 		return
 	}
+	defer destServerSocket.Close()
 
-	headerInfo := parseHTTPHeader(httpHeader)
-	fmt.Printf("HTTP Info: %+v\n", headerInfo)
-
-	if headerInfo.connectionType == "Keep-Alive" {
-		mutex.Lock()
-		proxySocket, connectionExists = existingConnections[clientAddr]
-		mutex.Unlock()
-	}
-
-	fmt.Println("Connection exists:", connectionExists)
-
-	if !connectionExists || proxySocket == nil {
-		proxySocket, err = net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
+	// Read client's request headers
+	reader := bufio.NewReader(conn)
+	for {
+		line, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Error connecting to proxy:", err)
+			fmt.Println("Error reading from client:", err)
 			return
 		}
-
-		if headerInfo.connectionType == "Keep-Alive" {
-			mutex.Lock()
-			existingConnections[clientAddr] = proxySocket
-			fmt.Println("Creating a new connection", clientAddr, proxySocket.LocalAddr(), existingConnections)
-			mutex.Unlock()
+		_, err = destServerSocket.Write([]byte(line))
+		if err != nil {
+			fmt.Println("Error forwarding data to proxy:", err)
+			return
+		}
+		if line == "\r\n" {
+			break
 		}
 	}
+	fmt.Println("Forwarded client's request headers to server")
 
-	defer func() {
-		if headerInfo.connectionType == "Keep-Alive" {
-			mutex.Lock()
-			delete(existingConnections, clientAddr)
-			mutex.Unlock()
-		}
-		proxySocket.Close()
-	}()
-
-	fmt.Println("Client connected:", clientAddr)
-	fmt.Println("Proxy in-progress to:", SERVER_PORT)
-
-	var wg sync.WaitGroup
-	wg.Add(2) // We have two goroutines
-
-	// Helper function to handle data transfer and check for EOF
-	copyData := func(dst net.Conn, src net.Conn) {
-		defer wg.Done()
-
-		buf := make([]byte, 4096)
-		for {
-			n, err := src.Read(buf)
-			if n > 0 {
-				_, writeErr := dst.Write(buf[:n])
-				if writeErr != nil {
-					fmt.Println("Error writing data:", writeErr)
-					return
-				}
-			}
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				fmt.Println("Error reading data:", err)
-				return
-			}
-		}
+	// Forward any remaining data from client to server
+	_, err = io.Copy(destServerSocket, reader)
+	if err != nil {
+		fmt.Println("Error forwarding remaining data to proxy:", err)
+		return
 	}
+	fmt.Println("Successfully forwarded client's request to server")
 
-	go copyData(proxySocket, conn)
-	go copyData(conn, proxySocket)
+	// Forward server's response back to the client
+	fmt.Println("Forwarding server's response to client...")
+	_, err = io.Copy(conn, destServerSocket)
+	if err != nil {
+		fmt.Println("Error forwarding server's response to client:", err)
+		return
+	}
+	fmt.Println("Successfully forwarded server's response to client")
 
-	wg.Wait() // Wait for both goroutines to finish
 }
 
 type HTTPHeaderInfo struct {
