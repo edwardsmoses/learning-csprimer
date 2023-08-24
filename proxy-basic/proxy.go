@@ -76,6 +76,7 @@ func handleConnection(conn net.Conn) {
 
 	var proxySocket net.Conn
 	var connectionExists bool
+	var err error
 
 	fmt.Println("Existing connections", existingConnections)
 
@@ -124,7 +125,11 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Client connected:", clientAddr)
 	fmt.Println("Proxy in-progress to:", SERVER_PORT)
 
+	var wg sync.WaitGroup
+	wg.Add(2) // We have two goroutines
+
 	go func() {
+		defer wg.Done()
 		_, err := io.Copy(proxySocket, conn)
 		if err != nil {
 			fmt.Println("Error forwarding data to proxy:", err)
@@ -132,11 +137,14 @@ func handleConnection(conn net.Conn) {
 	}()
 
 	go func() {
+		defer wg.Done()
 		_, err := io.Copy(conn, proxySocket)
 		if err != nil {
 			fmt.Println("Error forwarding data to client:", err)
 		}
 	}()
+
+	wg.Wait() // Wait for both goroutines to finish
 
 }
 
