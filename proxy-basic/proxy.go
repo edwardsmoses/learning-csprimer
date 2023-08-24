@@ -69,26 +69,44 @@ func startProxyServer() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	//connect to the actual server on the SERVER_PORT
+	// Connect to the actual server
 	destServerSocket, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
 	if err != nil {
 		fmt.Println("Error connecting to proxy:", err)
 		return
 	}
-	defer destServerSocket.Close() //close both the client and server connections at the end
+	defer destServerSocket.Close()
 
 	fmt.Println("Client connected:", conn.RemoteAddr())
 	fmt.Println("Proxying to:", SERVER_PORT)
 
-	//goroutine to copy data from client (proxy) to server
+	// Read the first line of the client's request to get the HTTP header info
+	reader := bufio.NewReader(conn)
+	data, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading from client:", err)
+		return
+	}
+
+	headerInfo := parseHTTPHeader(data)
+	fmt.Printf("HTTP Info: %+v\n", headerInfo)
+
+	// Forward the first line of the client's request to the server
+	_, err = destServerSocket.Write([]byte(data))
+	if err != nil {
+		fmt.Println("Error forwarding data to proxy:", err)
+		return
+	}
+
+	// Goroutine to copy data from client (proxy) to server
 	go func() {
-		_, err := io.Copy(destServerSocket, conn)
+		_, err := io.Copy(destServerSocket, reader)
 		if err != nil {
 			fmt.Println("Error forwarding data to proxy:", err)
 		}
 	}()
 
-	//go routine to copy data from Server to client (proxy)
+	// Goroutine to copy data from Server to client (proxy)
 	go func() {
 		_, err := io.Copy(conn, destServerSocket)
 		if err != nil {
@@ -96,25 +114,6 @@ func handleConnection(conn net.Conn) {
 		}
 	}()
 
-	//reading the data from client
-	reader := bufio.NewReader(conn)
-	for {
-		data, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Client disconnected:", conn.RemoteAddr())
-			return
-		}
-
-		headerInfo := parseHTTPHeader(data)
-		fmt.Printf("HTTP Info: %+v\n", headerInfo)
-
-		//forward the received data from the Proxy Server to the Proxy Client
-		_, err = destServerSocket.Write([]byte(data))
-		if err != nil {
-			fmt.Println("Error forwarding modified request to proxy:", err)
-			return
-		}
-	}
 }
 
 type HTTPHeaderInfo struct {
