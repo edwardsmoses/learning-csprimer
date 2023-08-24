@@ -87,7 +87,7 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	headerInfo := parseHTTPHeader(httpHeader) // Assuming you have this function from previous examples
+	headerInfo := parseHTTPHeader(httpHeader)
 	fmt.Printf("HTTP Info: %+v\n", headerInfo)
 
 	if headerInfo.connectionType == "Keep-Alive" {
@@ -98,7 +98,7 @@ func handleConnection(conn net.Conn) {
 
 	fmt.Println("Connection exists:", connectionExists)
 
-	if !connectionExists {
+	if !connectionExists || proxySocket == nil {
 		proxySocket, err = net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
 		if err != nil {
 			fmt.Println("Error connecting to proxy:", err)
@@ -108,7 +108,7 @@ func handleConnection(conn net.Conn) {
 		if headerInfo.connectionType == "Keep-Alive" {
 			mutex.Lock()
 			existingConnections[clientAddr] = proxySocket
-			fmt.Println("we are here creating a new coonnection", clientAddr, proxySocket.LocalAddr(), existingConnections)
+			fmt.Println("Creating a new connection", clientAddr, proxySocket.LocalAddr(), existingConnections)
 			mutex.Unlock()
 		}
 	}
@@ -128,24 +128,34 @@ func handleConnection(conn net.Conn) {
 	var wg sync.WaitGroup
 	wg.Add(2) // We have two goroutines
 
-	go func() {
+	// Helper function to handle data transfer and check for EOF
+	copyData := func(dst net.Conn, src net.Conn) {
 		defer wg.Done()
-		_, err := io.Copy(proxySocket, conn)
-		if err != nil {
-			fmt.Println("Error forwarding data to proxy:", err)
-		}
-	}()
 
-	go func() {
-		defer wg.Done()
-		_, err := io.Copy(conn, proxySocket)
-		if err != nil {
-			fmt.Println("Error forwarding data to client:", err)
+		buf := make([]byte, 4096)
+		for {
+			n, err := src.Read(buf)
+			if n > 0 {
+				_, writeErr := dst.Write(buf[:n])
+				if writeErr != nil {
+					fmt.Println("Error writing data:", writeErr)
+					return
+				}
+			}
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				fmt.Println("Error reading data:", err)
+				return
+			}
 		}
-	}()
+	}
+
+	go copyData(proxySocket, conn)
+	go copyData(conn, proxySocket)
 
 	wg.Wait() // Wait for both goroutines to finish
-
 }
 
 type HTTPHeaderInfo struct {
