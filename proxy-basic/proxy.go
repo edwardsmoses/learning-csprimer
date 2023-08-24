@@ -74,25 +74,48 @@ func handleConnection(conn net.Conn) {
 
 	clientAddr := conn.RemoteAddr().String()
 
-	mutex.Lock()
-	proxySocket, exists := existingConnections[clientAddr]
-	if !exists {
-		var err error
+	var proxySocket net.Conn
+	var connectionExists bool
+
+	fmt.Println("Existing connections", existingConnections)
+
+	reader := bufio.NewReader(conn)
+	httpHeader, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Client disconnected:", clientAddr)
+		return
+	}
+
+	headerInfo := parseHTTPHeader(httpHeader) // Assuming you have this function from previous examples
+	fmt.Printf("HTTP Info: %+v\n", headerInfo)
+
+	if headerInfo.connectionType == "Keep-Alive" {
+		mutex.Lock()
+		proxySocket, connectionExists = existingConnections[clientAddr]
+		mutex.Unlock()
+	}
+
+	if !connectionExists {
 		proxySocket, err = net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
 		if err != nil {
 			fmt.Println("Error connecting to proxy:", err)
-			mutex.Unlock()
 			return
 		}
-		existingConnections[clientAddr] = proxySocket
+
+		if headerInfo.connectionType == "keep-alive" {
+			mutex.Lock()
+			existingConnections[clientAddr] = proxySocket
+			mutex.Unlock()
+		}
 	}
-	mutex.Unlock()
 
 	defer func() {
-		mutex.Lock()
+		if headerInfo.connectionType == "keep-alive" {
+			mutex.Lock()
+			delete(existingConnections, clientAddr)
+			mutex.Unlock()
+		}
 		proxySocket.Close()
-		delete(existingConnections, clientAddr)
-		mutex.Unlock()
 	}()
 
 	fmt.Println("Client connected:", clientAddr)
@@ -111,24 +134,6 @@ func handleConnection(conn net.Conn) {
 			fmt.Println("Error forwarding data to client:", err)
 		}
 	}()
-
-	reader := bufio.NewReader(conn)
-	for {
-		data, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Client disconnected:", clientAddr)
-			return
-		}
-
-		headerInfo := parseHTTPHeader(data) // Assuming you have this function from previous examples
-		fmt.Printf("HTTP Info: %+v\n", headerInfo)
-
-		_, err = proxySocket.Write([]byte(data))
-		if err != nil {
-			fmt.Println("Error forwarding modified request to proxy:", err)
-			return
-		}
-	}
 
 }
 
