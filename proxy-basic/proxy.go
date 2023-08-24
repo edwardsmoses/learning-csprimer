@@ -30,6 +30,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 )
 
 var (
@@ -98,8 +99,12 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(2) // We have two goroutines
+
 	// Goroutine to copy data from client (proxy) to server
 	go func() {
+		defer wg.Done()
 		_, err := io.Copy(destServerSocket, reader)
 		if err != nil {
 			fmt.Println("Error forwarding data to proxy:", err)
@@ -108,11 +113,14 @@ func handleConnection(conn net.Conn) {
 
 	// Goroutine to copy data from Server to client (proxy)
 	go func() {
+		defer wg.Done()
 		_, err := io.Copy(conn, destServerSocket)
 		if err != nil {
 			fmt.Println("Error forwarding data to client:", err)
 		}
 	}()
+
+	wg.Wait() // Wait for both goroutines to finish
 
 }
 
