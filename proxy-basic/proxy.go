@@ -95,6 +95,8 @@ func handleConnection(conn net.Conn) {
 		mutex.Unlock()
 	}
 
+	fmt.Println("Connection exists:", connectionExists)
+
 	if !connectionExists {
 		proxySocket, err = net.Dial("tcp", fmt.Sprintf("localhost:%d", SERVER_PORT))
 		if err != nil {
@@ -102,15 +104,16 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		if headerInfo.connectionType == "keep-alive" {
+		if headerInfo.connectionType == "Keep-Alive" {
 			mutex.Lock()
 			existingConnections[clientAddr] = proxySocket
+			fmt.Println("we are here creating a new coonnection", clientAddr, proxySocket.LocalAddr(), existingConnections)
 			mutex.Unlock()
 		}
 	}
 
 	defer func() {
-		if headerInfo.connectionType == "keep-alive" {
+		if headerInfo.connectionType == "Keep-Alive" {
 			mutex.Lock()
 			delete(existingConnections, clientAddr)
 			mutex.Unlock()
