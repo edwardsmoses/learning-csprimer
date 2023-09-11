@@ -22,6 +22,11 @@ int main(int argc, char* argv[]) {
         signal(i, handle);
     }
 
+    //create child process and immediately exit
+    if (0 == fork()){
+      exit(0);
+    }
+
     // spin
     for (;;)
       sleep(1);
