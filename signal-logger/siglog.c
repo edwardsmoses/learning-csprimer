@@ -3,12 +3,13 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 volatile uint64_t handled = 0;
 
 void handle(int sig) {
   handled |= (1 << sig);
-  printf("Caught %d: %s (%d total)\n", sig, sys_siglist[sig],
+  printf("Caught %d: %s (%d total)\n", sig, strsignal(sig),
          __builtin_popcount(handled));
 }
 
