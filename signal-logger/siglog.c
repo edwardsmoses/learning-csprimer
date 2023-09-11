@@ -11,6 +11,9 @@ void handle(int sig) {
   handled |= (1 << sig);
   printf("Caught %d: %s (%d total)\n", sig, strsignal(sig),
          __builtin_popcount(handled));
+  if(sig == SIGINT || sig == SIGTERM) {
+           exit(0);
+  }
 }
 
 int main(int argc, char* argv[]) {
