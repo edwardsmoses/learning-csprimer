@@ -20,15 +20,21 @@ func readFromTerminal() string {
 
 func execCommand(command string) {
 	commandString := strings.TrimSuffix(command, "\n")
+
 	cmd := exec.Command(commandString)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	cmd.Run()
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 }
 
 func main() {
-	fmt.Println("starting the shell...")
-
-	cmdString := readFromTerminal()
-	execCommand(cmdString) //exec the command
+	for {
+		fmt.Print("$ eddy@shell:~ ")
+		cmdString := readFromTerminal()
+		execCommand(cmdString) //exec the command
+	}
 }
