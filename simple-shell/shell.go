@@ -8,20 +8,21 @@ import (
 	"strings"
 )
 
-func readFromTerminal() string {
+func readFromTerminal() []string {
 	reader := bufio.NewReader(os.Stdin)
 	cmdString, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	return cmdString
+	cmdString = strings.TrimSuffix(cmdString, "\n")
+
+	arrCommandStr := strings.Fields(cmdString)
+	return arrCommandStr
 }
 
-func execCommand(command string) {
-	commandString := strings.TrimSuffix(command, "\n")
-
-	cmd := exec.Command(commandString)
+func execCommand(arrCommandStr []string) {
+	cmd := exec.Command(arrCommandStr[0], arrCommandStr[1:]...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
@@ -31,10 +32,20 @@ func execCommand(command string) {
 	}
 }
 
+func execAppSpecificCommand(arrCommandStr []string) {
+	switch arrCommandStr[0] {
+	case "exit":
+		os.Exit(0)
+	}
+}
+
 func main() {
 	for {
 		fmt.Print("$ eddy@shell:~ ")
+
 		cmdString := readFromTerminal()
-		execCommand(cmdString) //exec the command
+
+		execAppSpecificCommand(cmdString) //exec app specific command if match
+		execCommand(cmdString)            //exec the command
 	}
 }
