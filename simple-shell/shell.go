@@ -75,10 +75,10 @@ func execPipeline(pipeline []string) {
 
 		cmdList = append(cmdList, cmd)
 
-		go func() {
+		go func(reader io.Reader) {
 			defer stdoutWriter.Close()
-			io.Copy(os.Stdout, stdoutReader)
-		}()
+			io.Copy(os.Stdout, reader)
+		}(stdoutReader)
 
 		stdin = stdoutReader
 	}
