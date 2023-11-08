@@ -22,27 +22,15 @@ func readFromTerminal() []string {
 	return arrCommandStr
 }
 
-func execCommand(arrCommandStr []string, stdin io.Reader) io.Reader {
+func execCommand(arrCommandStr []string) {
 	cmd := exec.Command(arrCommandStr[0], arrCommandStr[1:]...)
 	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 
-	if stdin != nil {
-		cmd.Stdin = stdin
-	}
-
-	stdout, err := cmd.StdoutPipe()
+	err := cmd.Run()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return nil
 	}
-
-	err = cmd.Run()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return nil
-	}
-
-	return stdout
 }
 
 func execAppSpecificCommand(arrCommandStr []string) {
@@ -58,12 +46,20 @@ func execPipeline(pipeline []string) {
 	for _, cmdString := range pipeline {
 		arrCommandStr := strings.Fields(cmdString)
 
-		stdout := execCommand(arrCommandStr, stdin)
-		if stdout == nil {
+		cmd := exec.Command(arrCommandStr[0], arrCommandStr[1:]...)
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = stdin
+
+		stdoutReader, stdoutWriter := io.Pipe()
+		cmd.Stdout = stdoutWriter
+
+		err := cmd.Start()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			return
 		}
 
-		stdin = stdout
+		stdin = stdoutReader
 	}
 
 	io.Copy(os.Stdout, stdin)
@@ -80,7 +76,7 @@ func main() {
 			execPipeline(pipeline)
 		} else {
 			execAppSpecificCommand(cmdString) //exec app specific command if match
-			execCommand(cmdString, nil)       //exec the command
+			execCommand(cmdString)            //exec the command
 		}
 	}
 }
