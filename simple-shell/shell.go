@@ -47,21 +47,33 @@ func execAppSpecificCommand(cmdString string) {
 func execPipeline(pipeline []string) {
 	var stdin io.Reader
 
+	var cmdList []*exec.Cmd
+	var err error
+
 	for _, cmdString := range pipeline {
 		arrCommandStr := strings.Fields(cmdString)
 
 		cmd := exec.Command(arrCommandStr[0], arrCommandStr[1:]...)
 		cmd.Stderr = os.Stderr
-		cmd.Stdin = stdin
+
+		if stdin != nil {
+			cmd.Stdin, err = cmdList[len(cmdList)-1].StdoutPipe()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
+		}
 
 		stdoutReader, stdoutWriter := io.Pipe()
 		cmd.Stdout = stdoutWriter
 
-		err := cmd.Start()
+		err = cmd.Start()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return
 		}
+
+		cmdList = append(cmdList, cmd)
 
 		go func() {
 			defer stdoutWriter.Close()
@@ -71,7 +83,13 @@ func execPipeline(pipeline []string) {
 		stdin = stdoutReader
 	}
 
-	io.Copy(os.Stdout, stdin)
+	for _, cmd := range cmdList {
+		err = cmd.Wait()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+	}
 }
 
 func main() {
