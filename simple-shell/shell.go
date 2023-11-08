@@ -63,6 +63,11 @@ func execPipeline(pipeline []string) {
 			return
 		}
 
+		go func() {
+			defer stdoutWriter.Close()
+			io.Copy(os.Stdout, stdoutReader)
+		}()
+
 		stdin = stdoutReader
 	}
 
