@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -16,80 +17,51 @@ func readFromTerminal() string {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	cmdString = strings.TrimSuffix(cmdString, "\n")
-
-	return cmdString
+	return strings.TrimSuffix(cmdString, "\n")
 }
 
-func execCommand(cmdString string) {
-	arrCommandStr := strings.Fields(cmdString)
-
-	cmd := exec.Command(arrCommandStr[0], arrCommandStr[1:]...)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-
-	err := cmd.Run()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-}
-
-func execAppSpecificCommand(cmdString string) {
-
-	arrCommandStr := strings.Fields(cmdString)
-
-	switch arrCommandStr[0] {
-	case "exit":
-		os.Exit(0)
-	}
-}
-
-func execPipeline(pipeline []string) {
-	var stdin io.Reader
-
-	var cmdList []*exec.Cmd
+func execPipeline(commands [][]string) {
 	var err error
+	var output bytes.Buffer
+	var input io.Reader
 
-	for _, cmdString := range pipeline {
-		arrCommandStr := strings.Fields(cmdString)
+	for i, command := range commands {
+		cmd := exec.Command(command[0], command[1:]...)
 
-		cmd := exec.Command(arrCommandStr[0], arrCommandStr[1:]...)
+		if i > 0 {
+			// Set the input of the current command to be the output of the previous command
+			cmd.Stdin = input
+		}
+
+		if i < len(commands)-1 {
+			// Save the output for the next command in the pipeline
+			output.Reset()
+			cmd.Stdout = &output
+		} else {
+			// Last command, output to stdout
+			cmd.Stdout = os.Stdout
+		}
+
 		cmd.Stderr = os.Stderr
-
-		if stdin != nil {
-			cmd.Stdin, err = cmdList[len(cmdList)-1].StdoutPipe()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
-		}
-
-		stdoutReader, stdoutWriter := io.Pipe()
-		cmd.Stdout = stdoutWriter
-
-		err = cmd.Start()
+		err = cmd.Run()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return
 		}
 
-		cmdList = append(cmdList, cmd)
+		input = bytes.NewReader(output.Bytes())
+	}
+}
 
-		go func(reader io.Reader) {
-			defer stdoutWriter.Close()
-			io.Copy(os.Stdout, reader)
-		}(stdoutReader)
+func parseCommand(cmdString string) [][]string {
+	parts := strings.Split(cmdString, "|")
+	var commands [][]string
 
-		stdin = stdoutReader
+	for _, part := range parts {
+		commands = append(commands, strings.Fields(strings.TrimSpace(part)))
 	}
 
-	for _, cmd := range cmdList {
-		err = cmd.Wait()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return
-		}
-	}
+	return commands
 }
 
 func main() {
@@ -98,17 +70,11 @@ func main() {
 
 		cmdString := readFromTerminal()
 
-		if strings.Contains(cmdString, "|") {
-			pipeline := strings.Split(cmdString, "|")
-
-			for i, cmd := range pipeline {
-				pipeline[i] = strings.TrimSpace(cmd)
-			}
-
-			execPipeline(pipeline)
-		} else {
-			execAppSpecificCommand(cmdString) //exec app specific command if match
-			execCommand(cmdString)            //exec the command
+		if cmdString == "exit" {
+			os.Exit(0)
 		}
+
+		commands := parseCommand(cmdString)
+		execPipeline(commands)
 	}
 }
