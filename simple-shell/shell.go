@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func readFromTerminal() []string {
+func readFromTerminal() string {
 	reader := bufio.NewReader(os.Stdin)
 	cmdString, err := reader.ReadString('\n')
 	if err != nil {
@@ -18,11 +18,12 @@ func readFromTerminal() []string {
 
 	cmdString = strings.TrimSuffix(cmdString, "\n")
 
-	arrCommandStr := strings.Fields(cmdString)
-	return arrCommandStr
+	return cmdString
 }
 
-func execCommand(arrCommandStr []string) {
+func execCommand(cmdString string) {
+	arrCommandStr := strings.Fields(cmdString)
+
 	cmd := exec.Command(arrCommandStr[0], arrCommandStr[1:]...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -33,7 +34,10 @@ func execCommand(arrCommandStr []string) {
 	}
 }
 
-func execAppSpecificCommand(arrCommandStr []string) {
+func execAppSpecificCommand(cmdString string) {
+
+	arrCommandStr := strings.Fields(cmdString)
+
 	switch arrCommandStr[0] {
 	case "exit":
 		os.Exit(0)
@@ -69,12 +73,23 @@ func main() {
 	for {
 		fmt.Print("$ eddy@shell:~ ")
 
-		cmdString := readFromTerminal()
+		reader := bufio.NewReader(os.Stdin)
+		firstCmdString, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		firstCmdString = strings.TrimSuffix(firstCmdString, "\n")
 
-		if strings.Contains(cmdString[0], "|") {
-			pipeline := strings.Split(strings.Join(cmdString, " "), "|")
+		if strings.Contains(firstCmdString, "|") {
+			pipeline := strings.Split(firstCmdString, "|")
+
+			for i, cmd := range pipeline {
+				pipeline[i] = strings.TrimSpace(cmd)
+			}
 			execPipeline(pipeline)
 		} else {
+			cmdString := readFromTerminal()
+			fmt.Println("here right", cmdString)
 			execAppSpecificCommand(cmdString) //exec app specific command if match
 			execCommand(cmdString)            //exec the command
 		}
