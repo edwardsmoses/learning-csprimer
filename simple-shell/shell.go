@@ -73,23 +73,17 @@ func main() {
 	for {
 		fmt.Print("$ eddy@shell:~ ")
 
-		reader := bufio.NewReader(os.Stdin)
-		firstCmdString, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		firstCmdString = strings.TrimSuffix(firstCmdString, "\n")
+		cmdString := readFromTerminal()
 
-		if strings.Contains(firstCmdString, "|") {
-			pipeline := strings.Split(firstCmdString, "|")
+		if strings.Contains(cmdString, "|") {
+			pipeline := strings.Split(cmdString, "|")
 
 			for i, cmd := range pipeline {
 				pipeline[i] = strings.TrimSpace(cmd)
 			}
+
 			execPipeline(pipeline)
 		} else {
-			cmdString := readFromTerminal()
-			fmt.Println("here right", cmdString)
 			execAppSpecificCommand(cmdString) //exec app specific command if match
 			execCommand(cmdString)            //exec the command
 		}
