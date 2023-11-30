@@ -7,11 +7,11 @@ int counter = 0;
 pthread_mutex_t lock;
 
 void* thread_entry(void *arg) {
-    for (int i = 0; i < EACH_COUNT; i++) {
         pthread_mutex_lock(&lock); // Lock the mutex before accessing counter
+    for (int i = 0; i < EACH_COUNT; i++) {
         counter++;
-        pthread_mutex_unlock(&lock); // Unlock the mutex after accessing counter
     }
+        pthread_mutex_unlock(&lock); // Unlock the mutex after accessing counter
     return NULL;
 }
 
